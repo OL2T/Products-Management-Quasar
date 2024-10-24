@@ -3,7 +3,6 @@ import Manage from '../components/Manage'
 import ProductList from '../components/ProductList'
 import Dashboard from '../pages/Dashboard'
 import Index from '../pages/Index'
-import Users from '../pages/Customers'
 import Customers from '../pages/Customers'
 
 const routes = [

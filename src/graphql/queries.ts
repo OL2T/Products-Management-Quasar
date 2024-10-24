@@ -43,4 +43,16 @@ const ADD_PRODUCT = gql`
   }
 `
 
-export { GET_PRODUCTS, ADD_PRODUCT }
+const DELETE_PRODUCT = gql`
+  mutation DeleteProduct($id: String!) {
+    delete_products(where: { id: { _eq: $id } }) {
+      affected_rows
+      returning {
+        id
+        name
+      }
+    }
+  }
+`
+
+export { GET_PRODUCTS, ADD_PRODUCT, DELETE_PRODUCT }

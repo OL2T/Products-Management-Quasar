@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watchEffect } from 'vue'
-import { ADD_PRODUCT, GET_PRODUCTS } from '../graphql/queries'
+import { ADD_PRODUCT, DELETE_PRODUCT, GET_PRODUCTS } from '../graphql/queries'
 import { useMutation, useQuery } from '@vue/apollo-composable'
+import { toast } from 'vue3-toastify'
+import 'vue3-toastify/dist/index.css'
 
 interface Product {
   id: string
@@ -30,41 +32,88 @@ export const useProductStore = defineStore('products', () => {
   const fetchProducts = () => {
     const { result, loading, error } = useQuery(GET_PRODUCTS)
 
-    // Watch for changes in `data` and update `products`
     watchEffect(() => {
-      if (loading.value) {
-        isLoading.value = true
-      } else {
-        isLoading.value = false
-      }
+      isLoading.value = loading.value
       if (result.value) {
         products.value = result.value.products
       }
       if (error.value) {
         console.error('Error fetching products:', error.value)
+        toast('Error fetching products', {
+          theme: 'auto',
+          type: 'error',
+          position: 'top-right'
+        })
       }
     })
   }
 
-  const addProduct = async (newProduct: Omit<Product, 'id'>) => {
+  const handleAddProduct = async (newProduct: Omit<Product, 'id'>) => {
     const { mutate } = useMutation(ADD_PRODUCT)
 
     try {
       const response = await mutate({
+        name: newProduct.name,
         category: newProduct.category,
         description: newProduct.description,
-        name: newProduct.name,
         stock: newProduct.stock,
         price: newProduct.price
       })
 
-      if (response?.data?.insert_products?.returning) {
+      if (response?.data?.insert_products?.returning?.length) {
         const addedProduct = response.data.insert_products.returning[0]
-        products.value.push(addedProduct) // Add the new product to the store
-        console.log('Product added:', addedProduct)
+        products.value = [...products.value, addedProduct]
+        products.value.push(addedProduct)
+
+        toast('Product added successfully', {
+          theme: 'auto',
+          type: 'success',
+          position: 'top-right'
+        })
+
+        // fetchProducts()
+      } else {
+        throw new Error('Failed to add product. No product returned.')
+      }
+      if (!response || !response.data || !response.data.insert_products) {
+        throw new Error('Mutation response structure is unexpected.')
       }
     } catch (error) {
+      toast('Error adding product', {
+        theme: 'auto',
+        type: 'error',
+        position: 'top-right'
+      })
       console.error('Error adding product:', error)
+    }
+  }
+
+  const handleDeleteProduct = async (id: string) => {
+    const { mutate } = useMutation(DELETE_PRODUCT)
+
+    try {
+      const response = await mutate({ id })
+
+      // console.log
+      console.log('Delete product mutation response:', response)
+
+      if (response?.data?.delete_products?.affected_rows) {
+        products.value = products.value.filter((product) => product.id !== id)
+        toast('Product deleted successfully', {
+          theme: 'auto',
+          type: 'success',
+          position: 'top-right'
+        })
+      } else {
+        throw new Error('Failed to delete product. No rows affected.')
+      }
+    } catch (error) {
+      toast('Error deleting product', {
+        theme: 'auto',
+        type: 'error',
+        position: 'top-right'
+      })
+      console.error('Error deleting product:', error)
     }
   }
 
@@ -74,6 +123,7 @@ export const useProductStore = defineStore('products', () => {
     filterProducts,
     fetchProducts,
     handleChangeInput,
-    addProduct
+    handleAddProduct,
+    handleDeleteProduct
   }
 })

@@ -1,6 +1,7 @@
-import { defineComponent, onMounted, ref } from 'vue'
+import { defineComponent, onMounted, ref, watchEffect } from 'vue'
 import { useProductStore } from '../store/ProductStore'
 import { RouterLink } from 'vue-router'
+import TableSkeleton from './TableSkeleton'
 
 export default defineComponent({
   setup() {
@@ -20,17 +21,22 @@ export default defineComponent({
         activePopoverId.value = null
       }
     }
-    console.log(store.isLoading)
+
+    const handleDeleteProduct = (id: string) => {
+      store.handleDeleteProduct(id)
+    }
 
     return {
       store,
       activePopoverId,
-      handleShowPopover
+      handleShowPopover,
+      handleDeleteProduct
     }
   },
 
   render() {
-    const { store, activePopoverId, handleShowPopover } = this
+    const { store, activePopoverId, handleShowPopover, handleDeleteProduct } =
+      this
 
     return (
       <div class="relative">
@@ -42,25 +48,81 @@ export default defineComponent({
             onInput={(e: any) => store.handleChangeInput(e)}
           />
 
-          <form class="max-w-sm mx-auto">
-            <select
-              id="products"
-              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            >
-              <option selected>Sort</option>
-              <option value="color">Color</option>
-              <option value="category">Category</option>
-              <option value="price">Price</option>
-            </select>
-          </form>
-          <div class="flex justify-end">
+          <div>
             <button
+              id="dropdownActionButton"
+              data-dropdown-toggle="dropdownAction"
+              class="inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
               type="button"
-              class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm  dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
             >
+              <span class="sr-only">Sort By</span>
+              Action
+              <svg
+                class="w-2.5 h-2.5 ms-2.5"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 10 6"
+              >
+                <path
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="m1 1 4 4 4-4"
+                />
+              </svg>
+            </button>
+
+            <div
+              id="dropdownAction"
+              class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600"
+            >
+              <ul
+                class="py-1 text-sm text-gray-700 dark:text-gray-200"
+                aria-labelledby="dropdownActionButton"
+              >
+                <li>
+                  <a
+                    href="#"
+                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                  >
+                    Reward
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                  >
+                    Promote
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                  >
+                    Activate account
+                  </a>
+                </li>
+              </ul>
+              <div class="py-1">
+                <a
+                  href="#"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                >
+                  Delete User
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end">
+            <button type="button">
               <RouterLink
                 to="/create"
-                class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm  dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 px-5 py-2.5"
+                class="block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm  dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 px-5 py-2.5"
               >
                 Create New
               </RouterLink>
@@ -92,11 +154,12 @@ export default defineComponent({
                 <th scope="col" class="px-6 py-3"></th>
               </tr>
             </thead>
-            <tbody>
-              {store.isLoading ? (
-                <div>Loading....</div>
-              ) : (
-                store.filterProducts.map((product: any, index: number) => (
+
+            {store.isLoading ? (
+              <TableSkeleton />
+            ) : (
+              <tbody>
+                {store.filterProducts.map((product: any, index: number) => (
                   <tr
                     key={product.id}
                     class={`${
@@ -202,7 +265,10 @@ export default defineComponent({
                             </svg>
                             <div>Edit</div>
                           </button>
-                          <button class="items-center text-red-500 font-medium hover:text-gray-500 flex gap-x-4">
+                          <button
+                            onClick={() => handleDeleteProduct(product.id)}
+                            class="items-center text-red-500 font-medium hover:text-gray-500 flex gap-x-4"
+                          >
                             <svg
                               class="w-4 h-4 text-red-500 dark:text-white hover:text-red-700 dark:hover:text-gray-300"
                               aria-hidden="true"
@@ -226,10 +292,9 @@ export default defineComponent({
                       )}
                     </td>
                   </tr>
-                ))
-              )}
-              {}
-            </tbody>
+                ))}
+              </tbody>
+            )}
           </table>
         </div>
       </div>

@@ -1,145 +1,128 @@
-import { defineComponent, ref } from 'vue'
+import { computed, defineComponent, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useProductStore } from '../store/ProductStore'
+import useVueValidate from '@vuelidate/core'
+import { required, minLength, minValue } from '@vuelidate/validators'
+import InputForm from './InputForm'
 
 export default defineComponent({
+  name: 'Create Products',
   setup() {
     const store = useProductStore()
-    const name = ref('')
-    const description = ref('')
-    const category = ref('')
-    const stock = ref(0)
-    const price = ref(0)
+    const formCreate = reactive({
+      name: '',
+      description: '',
+      category: '',
+      stock: 0,
+      price: 0
+    })
 
-    const handleSubmit = (e) => {
+    const rules = computed(() => ({
+      name: { required, minLength: minLength(3) },
+      description: { required, minLength: minLength(3) },
+      category: { required, minLength: minLength(3) },
+      stock: { required, minValue: minValue(1) },
+      price: { required, minValue: minValue(1) }
+    }))
+
+    const v$ = useVueValidate(rules, formCreate)
+
+    const handleSubmit = async (e: Event) => {
       e.preventDefault()
-      store.addProduct({
-        name: name.value,
-        description: description.value,
-        category: category.value,
-        stock: stock.value,
-        price: price.value
-      })
 
-      // Clear the input fields after submitting
-      name.value = ''
-      description.value = ''
-      category.value = ''
-      stock.value = 0
-      price.value = 0
+      const result = await v$.value.$validate()
+      if (result) {
+        store.handleAddProduct({ ...formCreate })
+
+        v$.value.$reset()
+
+        // Clear input
+        formCreate.name = ''
+        formCreate.description = ''
+        formCreate.category = ''
+        formCreate.stock = 0
+        formCreate.price = 0
+      }
     }
-
     return () => (
-      <div class=" bg-[#fff] rounded-sm shadow-sm mx-4 dark:bg-gray-800">
-        <form class="my-8 p-4">
+      <div class="bg-[#fff] rounded-sm shadow-sm mx-4 dark:bg-gray-800">
+        <form class="my-8 p-4" onSubmit={handleSubmit}>
           <div class="text-2xl font-bold mb-8 dark:text-white">Create New</div>
-          <div class="group flex flex-col gap-y-4 mb-8">
-            <div>
-              <label
-                for="name"
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-              >
-                Product Name:
-              </label>
-              <input
-                id="name"
-                type="text"
-                placeholder="Enter name"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                required
-                v-model={name.value}
-              />
-            </div>
-            <div>
-              <label
-                for="category"
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-              >
-                Category:
-              </label>
-              <input
-                id="category"
-                type="text"
-                placeholder="Enter category"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                required
-                v-model={category.value}
-              />
-            </div>
-            <div>
-              <label
-                for="description"
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-              >
-                Description:
-              </label>
-              <input
-                id="description"
-                type="text"
-                placeholder="Enter description"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                required
-                v-model={description.value}
-              />
-            </div>
-            <div>
-              <label
-                for="stock"
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-              >
-                Stock:
-              </label>
-              <input
-                id="stock"
-                type="text"
-                placeholder="Enter stock"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                required
-                v-model={stock.value}
-              />
-            </div>
-            <div>
-              <label
-                for="price"
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-              >
-                Price:
-              </label>
-              <input
-                id="price"
-                type="text"
-                placeholder="Enter price"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                required
-                v-model={price.value}
-              />
-            </div>
+          <div class="mb-5">
+            <InputForm
+              name="Product Name"
+              id="name"
+              placeholder="Enter name"
+              v-model={formCreate.name}
+              error={v$.value.name.$error}
+              errorMessage={v$.value.name.$errors.map(
+                (error) => error.$message
+              )}
+            />
+            <InputForm
+              name="Category"
+              id="category"
+              placeholder="Enter category"
+              v-model={formCreate.category}
+              error={v$.value.category.$error}
+              errorMessage={v$.value.category.$errors.map(
+                (error) => error.$message
+              )}
+            />
+            <InputForm
+              name="Description"
+              id="description"
+              placeholder="Enter description"
+              v-model={formCreate.description}
+              error={v$.value.description.$error}
+              errorMessage={v$.value.description.$errors.map(
+                (error) => error.$message
+              )}
+            />
+            <InputForm
+              name="Stock"
+              id="stock"
+              type="number"
+              placeholder="Enter stock"
+              v-model={formCreate.stock}
+              error={v$.value.stock.$error}
+              errorMessage={v$.value.stock.$errors.map(
+                (error) => error.$message
+              )}
+            />
+            <InputForm
+              name="Price"
+              id="price"
+              type="number"
+              placeholder="Enter price"
+              v-model={formCreate.price}
+              error={v$.value.price.$error}
+              errorMessage={v$.value.price.$errors.map(
+                (error) => error.$message
+              )}
+            />
           </div>
           <div class="flex gap-x-4 items-center">
             <button
               type="submit"
-              class="px-4 py-2 rounded-md bg-blue-500 text-white font-semibold text-[18px]"
-              onClick={handleSubmit}
+              class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
             >
               Create
             </button>
-            <button class="px-4 py-2 rounded-md bg-gray-500 text-white font-semibold text-[18px]">
-              <RouterLink to="/">Cancel</RouterLink>
+            <button type="button">
+              <RouterLink
+                to="/products"
+                class="inline-block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5  dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+              >
+                Cancel
+              </RouterLink>
             </button>
           </div>
         </form>
       </div>
     )
-
-    return {
-      name,
-      description,
-      category,
-      stock,
-      price,
-      handleSubmit
-    }
   }
+
   // render() {
   //   const { name, description, category, stock, price, handleSubmit } = this
   // }
