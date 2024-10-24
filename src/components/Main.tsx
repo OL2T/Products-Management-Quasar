@@ -11,5 +11,6 @@ export default defineComponent({
         </div>
       </main>
     )
-  }
+  },
+  render() {}
 })

@@ -1,19 +1,45 @@
-import { defineComponent } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useProductStore } from '../store/ProductStore'
 
 export default defineComponent({
   setup() {
+    const store = useProductStore()
+    const name = ref('')
+    const description = ref('')
+    const category = ref('')
+    const stock = ref(0)
+    const price = ref(0)
+
+    const handleSubmit = (e) => {
+      e.preventDefault()
+      store.addProduct({
+        name: name.value,
+        description: description.value,
+        category: category.value,
+        stock: stock.value,
+        price: price.value
+      })
+
+      // Clear the input fields after submitting
+      name.value = ''
+      description.value = ''
+      category.value = ''
+      stock.value = 0
+      price.value = 0
+    }
+
     return () => (
-      <div class=" bg-white rounded-sm shadow-sm mx-4">
+      <div class=" bg-[#fff] rounded-sm shadow-sm mx-4 dark:bg-gray-800">
         <form class="my-8 p-4">
-          <div class="text-2xl font-bold mb-8">Create User</div>
+          <div class="text-2xl font-bold mb-8 dark:text-white">Create New</div>
           <div class="group flex flex-col gap-y-4 mb-8">
             <div>
               <label
                 for="name"
                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
               >
-                Name:
+                Product Name:
               </label>
               <input
                 id="name"
@@ -21,71 +47,80 @@ export default defineComponent({
                 placeholder="Enter name"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 required
+                v-model={name.value}
               />
             </div>
             <div>
               <label
-                for="name"
+                for="category"
                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
               >
-                User Name:
+                Category:
               </label>
               <input
-                id="username"
+                id="category"
                 type="text"
-                placeholder="Enter username"
+                placeholder="Enter category"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 required
+                v-model={category.value}
               />
             </div>
             <div>
               <label
-                for="email"
+                for="description"
                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
               >
-                Email:
+                Description:
               </label>
               <input
-                id="email"
+                id="description"
                 type="text"
-                placeholder="Enter email"
+                placeholder="Enter description"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 required
+                v-model={description.value}
               />
             </div>
             <div>
               <label
-                for="phone"
+                for="stock"
                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
               >
-                Phone:
+                Stock:
               </label>
               <input
-                id="phone"
+                id="stock"
                 type="text"
-                placeholder="Enter phone"
+                placeholder="Enter stock"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 required
+                v-model={stock.value}
               />
             </div>
             <div>
               <label
-                for="website"
+                for="price"
                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
               >
-                Website:
+                Price:
               </label>
               <input
-                id="website"
+                id="price"
                 type="text"
-                placeholder="Enter website"
+                placeholder="Enter price"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 required
+                v-model={price.value}
               />
             </div>
           </div>
           <div class="flex gap-x-4 items-center">
-            <button class="px-4 py-2 rounded-md bg-blue-500 text-white font-semibold text-[18px]">
+            <button
+              type="submit"
+              class="px-4 py-2 rounded-md bg-blue-500 text-white font-semibold text-[18px]"
+              onClick={handleSubmit}
+            >
               Create
             </button>
             <button class="px-4 py-2 rounded-md bg-gray-500 text-white font-semibold text-[18px]">
@@ -95,5 +130,17 @@ export default defineComponent({
         </form>
       </div>
     )
+
+    return {
+      name,
+      description,
+      category,
+      stock,
+      price,
+      handleSubmit
+    }
   }
+  // render() {
+  //   const { name, description, category, stock, price, handleSubmit } = this
+  // }
 })

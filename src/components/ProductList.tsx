@@ -1,10 +1,10 @@
 import { defineComponent, onMounted, ref } from 'vue'
-import { useStore } from '../store/piniaStore'
+import { useProductStore } from '../store/ProductStore'
 import { computePosition } from '@floating-ui/dom'
 
 export default defineComponent({
   setup() {
-    const store = useStore()
+    const store = useProductStore()
     const activePopoverId = ref<number | null>(null)
     const reference = ref<HTMLElement | null>(null)
     const floating = ref<HTMLElement | null>(null)
