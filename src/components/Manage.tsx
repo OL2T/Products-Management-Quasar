@@ -1,12 +1,14 @@
 import { defineComponent, onMounted, ref, watchEffect } from 'vue'
-import { useProductStore } from '../store/ProductStore'
-import { RouterLink } from 'vue-router'
+import { useProductStore } from '../store/productStore'
+import { RouterLink, useRouter } from 'vue-router'
 import TableSkeleton from './TableSkeleton'
+import Create from './Create'
 
 export default defineComponent({
   setup() {
     const store = useProductStore()
     const activePopoverId = ref<number | null>(null)
+    const router = useRouter()
 
     onMounted(() => {
       store.fetchProducts()
@@ -16,7 +18,7 @@ export default defineComponent({
       if (activePopoverId.value !== id) {
         activePopoverId.value = id
 
-        console.log('Active productId: ', activePopoverId.value)
+        // console.log('Active productId: ', activePopoverId.value)
       } else {
         activePopoverId.value = null
       }
@@ -29,14 +31,20 @@ export default defineComponent({
     return {
       store,
       activePopoverId,
+      router,
       handleShowPopover,
       handleDeleteProduct
     }
   },
 
   render() {
-    const { store, activePopoverId, handleShowPopover, handleDeleteProduct } =
-      this
+    const {
+      store,
+      activePopoverId,
+      router,
+      handleShowPopover,
+      handleDeleteProduct
+    } = this
 
     return (
       <div class="relative">
@@ -76,7 +84,7 @@ export default defineComponent({
 
             <div
               id="dropdownAction"
-              class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600"
+              class="z-10 hidden bg-[#fff] divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600"
             >
               <ul
                 class="py-1 text-sm text-gray-700 dark:text-gray-200"
@@ -119,183 +127,293 @@ export default defineComponent({
           </div>
 
           <div class="flex justify-end">
-            <button type="button">
-              <RouterLink
-                to="/create"
-                class="block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm  dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 px-5 py-2.5"
-              >
-                Create New
-              </RouterLink>
+            <button
+              onClick={() => (store.isShowCreateModal = true)}
+              type="button"
+              class="block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm  dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 px-5 py-2"
+            >
+              Create New
             </button>
+            {store.isShowCreateModal && (
+              <div class="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center">
+                <div class="bg-[#fff] rounded-sm shadow-sm mx-4 dark:bg-gray-800">
+                  <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                      Create New Product
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => (store.isShowCreateModal = false)}
+                      class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                      data-modal-toggle="crud-modal"
+                    >
+                      <svg
+                        class="w-3 h-3"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 14 14"
+                      >
+                        <path
+                          stroke="currentColor"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+                        />
+                      </svg>
+                      <span class="sr-only">Close modal</span>
+                    </button>
+                  </div>
+                  <Create />
+                </div>
+              </div>
+            )}
           </div>
         </div>
-        <div class="">
-          <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 rounded-sm overflow-x-auto">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-              <tr>
-                <th scope="col" class="px-6 py-3">
-                  S/N
-                </th>
-                <th scope="col" class="px-6 py-3">
-                  Product name
-                </th>
-                <th scope="col" class="px-6 py-3">
-                  Description
-                </th>
-                <th scope="col" class="px-6 py-3">
-                  Category
-                </th>
-                <th scope="col" class="px-6 py-3">
-                  Price
-                </th>
-                <th scope="col" class="px-6 py-3">
-                  Stock
-                </th>
-                <th scope="col" class="px-6 py-3"></th>
-              </tr>
-            </thead>
+        <div class="flex flex-col">
+          <div class="product-list flex-1 max-h-[750px] overflow-y-scroll">
+            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 rounded-sm max-h-[750px] overflow-auto">
+              <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <tr>
+                  <th scope="col" class="px-6 py-3">
+                    S/N
+                  </th>
+                  <th scope="col" class="px-6 py-3">
+                    Product name
+                  </th>
+                  <th scope="col" class="px-6 py-3">
+                    Description
+                  </th>
+                  <th scope="col" class="px-6 py-3">
+                    Category
+                  </th>
+                  <th scope="col" class="px-6 py-3">
+                    Price
+                  </th>
+                  <th scope="col" class="px-6 py-3">
+                    Stock
+                  </th>
+                  <th scope="col" class="px-6 py-3"></th>
+                </tr>
+              </thead>
 
-            {store.isLoading ? (
-              <TableSkeleton />
-            ) : (
-              <tbody>
-                {store.filterProducts.map((product: any, index: number) => (
-                  <tr
-                    key={product.id}
-                    class={`${
-                      index % 2 == 0 ? 'bg-gray-100' : 'bg-[#fff]'
-                    } border-b dark:bg-gray-800 dark:border-gray-700`}
-                  >
-                    <th
-                      scope="row"
-                      class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+              {store.isLoading ? (
+                <TableSkeleton />
+              ) : (
+                <tbody>
+                  {store.filterProducts.map((product: any, index: number) => (
+                    <tr
+                      key={product.id}
+                      // class={`${
+                      //   index % 2 == 0 ? 'bg-gray-100' : 'bg-[#fff]'
+                      // } border-b dark:bg-gray-800 dark:border-gray-700`}
+                      class="bg-[#fff] dark:bg-gray-800 dark:border-gray-700 border-b"
                     >
-                      {index + 1}
-                    </th>
-                    <th
-                      scope="row"
-                      class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-                    >
-                      {product.name}
-                    </th>
-                    <td class="px-6 py-4">{product.description}</td>
-                    <td class="px-6 py-4">{product.category}</td>
-                    <td class="px-6 py-4">${product.price}</td>
-                    <td class="px-6 py-4">{product.stock}</td>
-                    <td class="px-6 py-4 flex items-center justify-end relative">
-                      <button
-                        onClick={() => handleShowPopover(product.id)}
-                        class="hover:cursor-pointer"
+                      <th
+                        scope="row"
+                        class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
                       >
-                        <svg
-                          class={[
-                            'w-6 h-6 dark:text-white',
-                            activePopoverId && activePopoverId === product.id
-                              ? 'text-blue-500'
-                              : 'text-gray-800'
-                          ]}
-                          aria-hidden="true"
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          fill="none"
-                          viewBox="0 0 24 24"
+                        {index + 1}
+                      </th>
+                      <th
+                        scope="row"
+                        class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+                      >
+                        {product.name}
+                      </th>
+                      <td class="px-6 py-4">{product.description}</td>
+                      <td class="px-6 py-4">{product.category}</td>
+                      <td class="px-6 py-4">${product.price}</td>
+                      <td class="px-6 py-4">{product.stock}</td>
+                      <td class="px-6 py-4 flex items-center justify-end relative">
+                        <button
+                          onClick={() => handleShowPopover(product.id)}
+                          class="hover:cursor-pointer text-[#fff]"
                         >
-                          <path
-                            stroke="currentColor"
-                            stroke-linecap="round"
-                            stroke-width="3"
-                            d="M12 6h.01M12 12h.01M12 18h.01"
-                          />
-                        </svg>
-                      </button>
-
-                      {activePopoverId === product.id && (
-                        <div
-                          // ref={floating}
-                          // style={{
-                          //   ...floatingStyles,
-                          //   position: strategy,
-                          //   // top: `${y}px`,
-                          //   // left: `${x}px`,
-                          //   width: 'max-content'
-                          // }}
-                          class="absolute bg-[#fff] dark:bg-gray-700 min-w-[max-content] top-[50px] right-[20px] z-50 p-2 rounded-sm flex flex-col gap-y-3 shadow-sm border"
-                        >
-                          <button class="items-center font-medium hover:text-gray-500 flex gap-x-4">
-                            <svg
-                              class="w-4 h-4 text-gray-500 dark:text-white hover:text-gray-800 dark:hover:text-gray-300"
-                              aria-hidden="true"
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                stroke="currentColor"
-                                stroke-width="2"
-                                d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"
-                              />
-                              <path
-                                stroke="currentColor"
-                                stroke-width="2"
-                                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                              />
-                            </svg>
-                            <div>View Detail</div>
-                          </button>
-                          <button class="items-center font-medium hover:text-gray-500 flex gap-x-4">
-                            <svg
-                              class="w-4 h-4 text-gray-500 dark:text-white hover:text-gray-800"
-                              aria-hidden="true"
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                stroke="currentColor"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M10.779 17.779 4.36 19.918 6.5 13.5m4.279 4.279 8.364-8.643a3.027 3.027 0 0 0-2.14-5.165 3.03 3.03 0 0 0-2.14.886L6.5 13.5m4.279 4.279L6.499 13.5m2.14 2.14 6.213-6.504M12.75 7.04 17 11.28"
-                              />
-                            </svg>
-                            <div>Edit</div>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProduct(product.id)}
-                            class="items-center text-red-500 font-medium hover:text-gray-500 flex gap-x-4"
+                          <svg
+                            class={[
+                              'w-6 h-6',
+                              activePopoverId && activePopoverId === product.id
+                                ? 'text-blue-500 dark:text-blue-300'
+                                : 'text-gray-800 dark:text-gray-400'
+                            ]}
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            fill="none"
+                            viewBox="0 0 24 24"
                           >
-                            <svg
-                              class="w-4 h-4 text-red-500 dark:text-white hover:text-red-700 dark:hover:text-gray-300"
-                              aria-hidden="true"
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              fill="none"
-                              viewBox="0 0 24 24"
+                            <path
+                              stroke="currentColor"
+                              stroke-linecap="round"
+                              stroke-width="3"
+                              d="M12 6h.01M12 12h.01M12 18h.01"
+                            />
+                          </svg>
+                        </button>
+
+                        {activePopoverId === product.id && (
+                          <div class="absolute bg-gray-100 dark:bg-gray-700 min-w-[max-content] top-[55px] right-4 z-50 py-2 rounded-sm flex flex-col shadow-lg">
+                            <div className="absolute top-0 right-[10px] border-x-transparent border-t-transparent border-b-[10px]">
+                              <div class="w-0 h-0 absolute right-0 -translate-y-full border-x-transparent border-x-[11px] border-t-transparent border-t-[9px] border-b-[9px] border-b-gray-100 dark:border-b-gray-700"></div>
+                            </div>
+                            <button
+                              onClick={(event: Event) => {
+                                event.stopPropagation()
+                                router.push({ path: `product/${product.id}` })
+                              }}
+                              class="flex items-center gap-x-2 px-3 py-2 dark:child:text-[#fff] hover:bg-[#fff] dark:hover:bg-gray-600 dark:hover:text-white"
                             >
-                              <path
-                                stroke="currentColor"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"
-                              />
-                            </svg>
-                            <div>Delete</div>
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            )}
-          </table>
+                              <svg
+                                class="w-4 h-4"
+                                aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"
+                                />
+                                <path
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                                />
+                              </svg>
+                              <div>View Detail</div>
+                            </button>
+                            <button class="flex items-center gap-x-2 px-3 py-2 dark:child:text-[#fff] hover:bg-[#fff] dark:hover:bg-gray-600 dark:hover:text-white">
+                              <svg
+                                class="w-4 h-4"
+                                aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  stroke="currentColor"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M10.779 17.779 4.36 19.918 6.5 13.5m4.279 4.279 8.364-8.643a3.027 3.027 0 0 0-2.14-5.165 3.03 3.03 0 0 0-2.14.886L6.5 13.5m4.279 4.279L6.499 13.5m2.14 2.14 6.213-6.504M12.75 7.04 17 11.28"
+                                />
+                              </svg>
+                              <div>Edit</div>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProduct(product.id)}
+                              class="flex items-center gap-x-2 px-3 py-2  hover:bg-[#fff] dark:hover:bg-gray-600 dark:text-[#fff] hover:text-red-500 child-hover:text-red-500  dark:child-hover:text-red-500"
+                            >
+                              <svg
+                                class="w-4 h-4"
+                                aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  stroke="currentColor"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"
+                                />
+                              </svg>
+                              <div>Delete</div>
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              )}
+            </table>
+          </div>
+          <nav
+            class="flex items-center flex-column flex-wrap md:flex-row justify-between pt-4 mt-auto"
+            aria-label="Table navigation"
+          >
+            <span class="text-sm font-normal text-gray-500 dark:text-gray-400 mb-4 md:mb-0 block w-full md:inline md:w-auto">
+              Showing{' '}
+              <span class="font-semibold text-gray-900 dark:text-white">
+                1-10
+              </span>{' '}
+              of{' '}
+              <span class="font-semibold text-gray-900 dark:text-white">
+                1000
+              </span>
+            </span>
+            <ul class="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
+              <li>
+                <a
+                  href="#"
+                  class="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-[#fff] border border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                >
+                  Previous
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-[#fff] border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                >
+                  1
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-[#fff] border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                >
+                  2
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  aria-current="page"
+                  class="flex items-center justify-center px-3 h-8 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                >
+                  3
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-[#fff] border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                >
+                  4
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-[#fff] border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                >
+                  5
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-[#fff] border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                >
+                  Next
+                </a>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     )

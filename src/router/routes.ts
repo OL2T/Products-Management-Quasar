@@ -4,6 +4,10 @@ import ProductList from '../components/ProductList'
 import Dashboard from '../pages/Dashboard'
 import Index from '../pages/Index'
 import Customers from '../pages/Customers'
+import Login from '../pages/Login'
+import Register from '../pages/Register'
+import DetailView from '../components/DetailView'
+import Edit from '../components/Edit'
 
 const routes = [
   {
@@ -11,10 +15,6 @@ const routes = [
     name: 'Home',
     component: Index,
     children: [
-      {
-        path: 'create',
-        component: Create
-      },
       {
         path: 'dashboard',
         component: Dashboard
@@ -24,14 +24,32 @@ const routes = [
         component: Customers
       },
       {
-        path: '/products',
+        path: 'products',
         component: Manage
+      },
+      {
+        path: 'product/:id',
+        component: DetailView
+      },
+      {
+        path: 'update/:id',
+        component: Edit
       }
       // {
       //   path: '/products',
       //   component: ProductList
       // }
     ]
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register
   },
 
   {

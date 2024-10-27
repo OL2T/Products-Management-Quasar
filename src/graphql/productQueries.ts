@@ -54,5 +54,55 @@ const DELETE_PRODUCT = gql`
     }
   }
 `
+const GET_PRODUCT_BY_ID = gql`
+  query GetProductById($id: String!) {
+    products(where: { id: { _eq: $id } }) {
+      id
+      name
+      description
+      category
+      stock
+      price
+    }
+  }
+`
 
-export { GET_PRODUCTS, ADD_PRODUCT, DELETE_PRODUCT }
+const UPDATE_PRODUCT = gql`
+  mutation UpdateProduct(
+    $id: String!
+    $category: String
+    $description: String
+    $name: String
+    $stock: Float
+    $price: Float
+  ) {
+    update_products(
+      where: { id: { _eq: $id } }
+      _set: {
+        category: $category
+        description: $description
+        name: $name
+        stock: $stock
+        price: $price
+      }
+    ) {
+      affected_rows
+      returning {
+        id
+        name
+        description
+        category
+        stock
+        price
+      }
+    }
+  }
+`
+
+export {
+  GET_PRODUCTS,
+  ADD_PRODUCT,
+  DELETE_PRODUCT,
+  GET_PRODUCT_BY_ID,
+  UPDATE_PRODUCT
+}

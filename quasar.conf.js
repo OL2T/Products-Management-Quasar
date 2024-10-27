@@ -4,7 +4,7 @@ const { configure } = require('quasar/wrappers')
 module.exports = configure(function (ctx) {
   return {
     // app boot file (/src/boot)
-    boot: ['pinia', 'apollo'],
+    boot: ['pinia', 'apollo', 'firebase'],
     sourceFiles: {
       rootComponent: 'src/App.tsx'
     },

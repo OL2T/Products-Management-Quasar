@@ -41,9 +41,11 @@ export default defineComponent({
               'bg-red-50 border border-red-500 text-red-900 placeholder-red-700 dark:bg-red-200 dark:text-red-500'
           ]}
         />
-        <div class="h-6">
+        <div class="flex h-6 gap-x-2">
           {props.error && props.errorMessage && (
-            <span class=" text-red-500 text-[12px]">{props.errorMessage}</span>
+            <div class="flex gap-x-2 text-red-500 text-[12px]">
+              {props.errorMessage}
+            </div>
           )}
         </div>
       </div>

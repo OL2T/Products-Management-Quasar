@@ -1,5 +1,5 @@
 import { defineComponent, onMounted, ref } from 'vue'
-import { useProductStore } from '../store/ProductStore'
+import { useProductStore } from '../store/productStore'
 import { computePosition } from '@floating-ui/dom'
 
 export default defineComponent({

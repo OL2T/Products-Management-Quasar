@@ -26,6 +26,7 @@
     "@vuelidate/validators": "^2.0.4",
     "babel-eslint": "^10.1.0",
     "dotenv": "^8.2.0",
+    "firebase": "^11.0.1",
     "framer-motion": "^11.11.9",
     "graphql": "^16.9.0",
     "graphql-tag": "^2.12.6",

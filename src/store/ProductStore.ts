@@ -1,9 +1,16 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watchEffect } from 'vue'
-import { ADD_PRODUCT, DELETE_PRODUCT, GET_PRODUCTS } from '../graphql/queries'
+import {
+  ADD_PRODUCT,
+  DELETE_PRODUCT,
+  GET_PRODUCT_BY_ID,
+  GET_PRODUCTS,
+  UPDATE_PRODUCT
+} from '../graphql/productQueries'
 import { useMutation, useQuery } from '@vue/apollo-composable'
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
+import { useRoute } from 'vue-router'
 
 interface Product {
   id: string
@@ -16,11 +23,15 @@ interface Product {
 
 export const useProductStore = defineStore('products', () => {
   const products = ref<Product[]>([])
+  const product = ref<Product>()
   const isLoading = ref(false)
   const querySearch = ref('')
+  const isShowCreateModal = ref(false)
+  const routes = useRoute()
 
-  const handleChangeInput = (e: any) => {
-    querySearch.value = e.target.value
+  const handleChangeInput = (e: Event) => {
+    const target = e.target as HTMLInputElement
+    querySearch.value = target.value
   }
 
   const filterProducts = computed(() => {
@@ -28,6 +39,29 @@ export const useProductStore = defineStore('products', () => {
       product.name.toLowerCase().includes(querySearch.value.toLowerCase())
     )
   })
+
+  const detailProduct = computed(() => {
+    return products.value.find((product) => product.id === routes.params.id)
+  })
+
+  const fetchProductById = (id: string) => {
+    const { result, loading, error } = useQuery(GET_PRODUCT_BY_ID, { id })
+
+    watchEffect(() => {
+      isLoading.value = loading.value
+      if (result.value && result.value.products.length > 0) {
+        product.value = result.value.products[0]
+      }
+      if (error.value) {
+        console.error('Error fetching product details:', error.value)
+        toast('Error fetching product details', {
+          theme: 'auto',
+          type: 'error',
+          position: 'top-right'
+        })
+      }
+    })
+  }
 
   const fetchProducts = () => {
     const { result, loading, error } = useQuery(GET_PRODUCTS)
@@ -63,14 +97,14 @@ export const useProductStore = defineStore('products', () => {
       if (response?.data?.insert_products?.returning?.length) {
         const addedProduct = response.data.insert_products.returning[0]
         products.value = [...products.value, addedProduct]
-        products.value.push(addedProduct)
+        // products.value.push(addedProduct)
 
         toast('Product added successfully', {
           theme: 'auto',
           type: 'success',
           position: 'top-right'
         })
-
+        isShowCreateModal.value = false
         // fetchProducts()
       } else {
         throw new Error('Failed to add product. No product returned.')
@@ -117,13 +151,56 @@ export const useProductStore = defineStore('products', () => {
     }
   }
 
+  const handleUpdateProduct = async (updatedProduct: Product) => {
+    const { mutate } = useMutation(UPDATE_PRODUCT)
+
+    try {
+      const response = await mutate({
+        id: updatedProduct.id,
+        name: updatedProduct.name,
+        category: updatedProduct.category,
+        description: updatedProduct.description,
+        stock: updatedProduct.stock,
+        price: updatedProduct.price
+      })
+
+      if (response?.data?.update_products?.affected_rows) {
+        const updated = response.data.update_products.returning[0]
+        const index = products.value.findIndex((p) => p.id === updated.id)
+        if (index !== -1) {
+          products.value[index] = updated
+        }
+
+        toast('Product updated successfully', {
+          theme: 'auto',
+          type: 'success',
+          position: 'top-right'
+        })
+      } else {
+        throw new Error('Failed to update product. No rows affected.')
+      }
+    } catch (error) {
+      toast('Error updating product', {
+        theme: 'auto',
+        type: 'error',
+        position: 'top-right'
+      })
+      console.error('Error updating product:', error)
+    }
+  }
+
   return {
+    product,
     products,
     isLoading,
     filterProducts,
+    isShowCreateModal,
+    detailProduct,
     fetchProducts,
     handleChangeInput,
     handleAddProduct,
-    handleDeleteProduct
+    handleDeleteProduct,
+    fetchProductById,
+    handleUpdateProduct
   }
 })
