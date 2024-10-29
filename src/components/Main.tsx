@@ -9,9 +9,7 @@ export default defineComponent({
     const reference = ref(null)
     const floating = ref(null)
     const floatingArrow = ref(null)
-    // const handleClick = () => {
-    //   isShow.value = !isShow.value
-    // }
+
     const handleMouseEnter = () => {
       isShow.value = true
     }
@@ -30,7 +28,6 @@ export default defineComponent({
           shift(),
           arrow({ element: floatingArrow, padding: 20 })
         ]
-        // open: isShow.value
       }
     )
 
@@ -82,15 +79,12 @@ export default defineComponent({
             </div>
             {isShow.value === true && (
               <div>
-                {/* <div className="absolute top-0 right-[10px] border-x-transparent border-t-transparent border-b-[10px]">
-                    <div class="w-0 h-0 absolute right-0 -translate-y-full border-x-transparent border-x-[11px] border-t-transparent border-t-[9px] border-b-[9px] border-b-gray-100 dark:border-b-gray-700"></div>
-                  </div> */}
                 <div
                   ref={floating}
                   style={floatingStyles.value}
                   onMouseenter={handleMouseEnter}
                   onMouseleave={handleMouseLeave}
-                  class="z-10 absolute right-0 top-[50px] bg-[#fff]  divide-y divide-gray-100 rounded-lg shadow-md w-44 dark:bg-gray-700 dark:divide-gray-600"
+                  class="z-10 absolute right-0 top-[50px] bg-[#fff] border  divide-y divide-gray-100 rounded-lg shadow-md w-44 dark:bg-gray-700 dark:divide-gray-600"
                 >
                   <div
                     ref={floatingArrow}
@@ -105,10 +99,10 @@ export default defineComponent({
                         middlewareData.value.arrow?.y != null
                           ? `${middlewareData.value.arrow.y}px`
                           : '',
-                      width: '10px',
-                      height: '10px'
+                      width: '14px',
+                      height: '14px'
                     }}
-                    class="bg-[#fff] dark:bg-gray-700 -mt-[5px] "
+                    class="bg-[#fff] dark:bg-gray-700 -mt-[8px] border-l border-t "
                   ></div>
                   <div class="px-4 py-3 text-sm text-gray-900 dark:text-white border-none">
                     <div>Bonnie Green</div>
