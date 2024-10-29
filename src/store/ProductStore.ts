@@ -27,7 +27,13 @@ export const useProductStore = defineStore('products', () => {
   const isLoading = ref(false)
   const querySearch = ref('')
   const isShowCreateModal = ref(false)
+  const isPopoverConfirmOpen = ref(false)
+  const currentPage = ref(1)
+  const itemsPerPage = ref(10) // Set items per page
+  const totalItems = ref(0)
   const routes = useRoute()
+  const limit = ref(10)
+  const offset = ref(0)
 
   const handleChangeInput = (e: Event) => {
     const target = e.target as HTMLInputElement
@@ -62,22 +68,42 @@ export const useProductStore = defineStore('products', () => {
       }
     })
   }
+  // Fetch products
+  const { result, loading, error, fetchMore } = useQuery(GET_PRODUCTS, {
+    limit: itemsPerPage.value,
+    offset: (currentPage.value - 1) * itemsPerPage.value
+  })
 
-  const fetchProducts = () => {
-    const { result, loading, error } = useQuery(GET_PRODUCTS)
+  watchEffect(async () => {
+    isLoading.value = loading.value
+    if (result.value) {
+      products.value = result.value.products
+      totalItems.value = result.value.totalCount || products.value.length
+      // console.log(products.value)
+      // console.log(totalItems.value)
+    }
+    if (error.value) {
+      console.error('Error fetching products:', error.value)
+      toast('Error fetching products', {
+        theme: 'auto',
+        type: 'error',
+        position: 'top-right'
+      })
+    }
+  })
 
-    watchEffect(() => {
-      isLoading.value = loading.value
-      if (result.value) {
-        products.value = result.value.products
-      }
-      if (error.value) {
-        console.error('Error fetching products:', error.value)
-        toast('Error fetching products', {
-          theme: 'auto',
-          type: 'error',
-          position: 'top-right'
-        })
+  const changePage = (page: number) => {
+    currentPage.value = page
+    const newOffset = (currentPage.value - 1) * itemsPerPage.value
+
+    fetchMore({
+      variables: { offset: newOffset, limit: itemsPerPage.value },
+      updateQuery: (previousResult, { fetchMoreResult }) => {
+        if (!fetchMoreResult) return previousResult
+        return {
+          ...previousResult,
+          products: fetchMoreResult.products // Cập nhật các sản phẩm mới cho trang hiện tại
+        }
       }
     })
   }
@@ -105,7 +131,6 @@ export const useProductStore = defineStore('products', () => {
           position: 'top-right'
         })
         isShowCreateModal.value = false
-        // fetchProducts()
       } else {
         throw new Error('Failed to add product. No product returned.')
       }
@@ -167,8 +192,15 @@ export const useProductStore = defineStore('products', () => {
       if (response?.data?.update_products?.affected_rows) {
         const updated = response.data.update_products.returning[0]
         const index = products.value.findIndex((p) => p.id === updated.id)
+        console.log('Updated product:', updated)
+        console.log(index)
         if (index !== -1) {
-          products.value[index] = updated
+          console.log(products.value[index])
+          products.value = [
+            ...products.value.slice(0, index),
+            updated,
+            ...products.value.slice(index + 1)
+          ]
         }
 
         toast('Product updated successfully', {
@@ -196,11 +228,16 @@ export const useProductStore = defineStore('products', () => {
     filterProducts,
     isShowCreateModal,
     detailProduct,
-    fetchProducts,
+    isPopoverConfirmOpen,
+    currentPage,
+    totalItems,
+    itemsPerPage,
+    // fetchProducts,
     handleChangeInput,
     handleAddProduct,
     handleDeleteProduct,
     fetchProductById,
-    handleUpdateProduct
+    handleUpdateProduct,
+    changePage
   }
 })

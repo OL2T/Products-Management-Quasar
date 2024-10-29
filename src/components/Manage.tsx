@@ -1,18 +1,22 @@
 import { defineComponent, onMounted, ref, watchEffect } from 'vue'
 import { useProductStore } from '../store/productStore'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import TableSkeleton from './TableSkeleton'
 import Create from './Create'
+import { useQuery } from '@vue/apollo-composable'
+import { GET_PRODUCTS } from '../graphql/productQueries'
+import 'vue3-toastify/dist/index.css'
+import { toast } from 'vue3-toastify'
 
 export default defineComponent({
   setup() {
     const store = useProductStore()
-    const activePopoverId = ref<number | null>(null)
     const router = useRouter()
+    const activePopoverId = ref<number | null>(null)
 
-    onMounted(() => {
-      store.fetchProducts()
-    })
+    const handlePageChange = (newPage: number) => {
+      store.changePage(newPage)
+    }
 
     const handleShowPopover = (id: number) => {
       if (activePopoverId.value !== id) {
@@ -24,6 +28,10 @@ export default defineComponent({
       }
     }
 
+    const handleShowConfirmPopover = () => {
+      store.isPopoverConfirmOpen = true
+    }
+
     const handleDeleteProduct = (id: string) => {
       store.handleDeleteProduct(id)
     }
@@ -33,7 +41,9 @@ export default defineComponent({
       activePopoverId,
       router,
       handleShowPopover,
-      handleDeleteProduct
+      handleDeleteProduct,
+      handleShowConfirmPopover,
+      handlePageChange
     }
   },
 
@@ -43,9 +53,13 @@ export default defineComponent({
       activePopoverId,
       router,
       handleShowPopover,
-      handleDeleteProduct
+      handleShowConfirmPopover,
+      handleDeleteProduct,
+      handlePageChange
     } = this
-
+    const totalPages = Math.ceil(store.totalItems / store.itemsPerPage)
+    // console.log('Total page:', totalPages)
+    // console.log(store.products)
     return (
       <div class="relative">
         <div class="filter flex items-center mb-5 gap-x-4">
@@ -172,7 +186,7 @@ export default defineComponent({
           </div>
         </div>
         <div class="flex flex-col">
-          <div class="product-list flex-1 max-h-[750px] overflow-y-scroll">
+          <div class="product-list w-full flex-1 max-h-[750px] overflow-auto">
             <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 rounded-sm max-h-[750px] overflow-auto">
               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
@@ -202,7 +216,7 @@ export default defineComponent({
                 <TableSkeleton />
               ) : (
                 <tbody>
-                  {store.filterProducts.map((product: any, index: number) => (
+                  {store.products.map((product: any, index: number) => (
                     <tr
                       key={product.id}
                       // class={`${
@@ -255,7 +269,7 @@ export default defineComponent({
                         </button>
 
                         {activePopoverId === product.id && (
-                          <div class="absolute bg-gray-100 dark:bg-gray-700 min-w-[max-content] top-[55px] right-4 z-50 py-2 rounded-sm flex flex-col shadow-lg">
+                          <div class="absolute bg-gray-100 dark:bg-gray-700 min-w-[max-content] top-[55px] right-4 z-50 py-2 px-1 rounded-sm flex flex-col shadow-lg">
                             <div className="absolute top-0 right-[10px] border-x-transparent border-t-transparent border-b-[10px]">
                               <div class="w-0 h-0 absolute right-0 -translate-y-full border-x-transparent border-x-[11px] border-t-transparent border-t-[9px] border-b-[9px] border-b-gray-100 dark:border-b-gray-700"></div>
                             </div>
@@ -288,7 +302,13 @@ export default defineComponent({
                               </svg>
                               <div>View Detail</div>
                             </button>
-                            <button class="flex items-center gap-x-2 px-3 py-2 dark:child:text-[#fff] hover:bg-[#fff] dark:hover:bg-gray-600 dark:hover:text-white">
+                            <button
+                              onClick={(event: Event) => {
+                                event.stopPropagation()
+                                router.push({ path: `update/${product.id}` })
+                              }}
+                              class="flex items-center gap-x-2 px-3 py-2 dark:child:text-[#fff] hover:bg-[#fff] dark:hover:bg-gray-600 dark:hover:text-white"
+                            >
                               <svg
                                 class="w-4 h-4"
                                 aria-hidden="true"
@@ -309,7 +329,7 @@ export default defineComponent({
                               <div>Edit</div>
                             </button>
                             <button
-                              onClick={() => handleDeleteProduct(product.id)}
+                              onClick={handleShowConfirmPopover}
                               class="flex items-center gap-x-2 px-3 py-2  hover:bg-[#fff] dark:hover:bg-gray-600 dark:text-[#fff] hover:text-red-500 child-hover:text-red-500  dark:child-hover:text-red-500"
                             >
                               <svg
@@ -331,6 +351,76 @@ export default defineComponent({
                               </svg>
                               <div>Delete</div>
                             </button>
+                            {store.isPopoverConfirmOpen && (
+                              <div class="fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 max-h-full bg-[#000] bg-opacity-80">
+                                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-4 w-full max-w-md max-h-full">
+                                  <div class="relative bg-[#fff] rounded-lg shadow dark:bg-gray-700">
+                                    <button
+                                      type="button"
+                                      class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                                      data-modal-hide="popup-modal"
+                                    >
+                                      <svg
+                                        class="w-3 h-3"
+                                        aria-hidden="true"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 14 14"
+                                      >
+                                        <path
+                                          stroke="currentColor"
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"
+                                          stroke-width="2"
+                                          d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+                                        />
+                                      </svg>
+                                      <span class="sr-only">Close modal</span>
+                                    </button>
+                                    <div class="p-4 md:p-5 text-center">
+                                      <svg
+                                        class="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200"
+                                        aria-hidden="true"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 20 20"
+                                      >
+                                        <path
+                                          stroke="currentColor"
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"
+                                          stroke-width="2"
+                                          d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                                        />
+                                      </svg>
+                                      <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                                        Are you sure you want to delete this
+                                        product?
+                                      </h3>
+                                      <button
+                                        data-modal-hide="popup-modal"
+                                        type="button"
+                                        onClick={() =>
+                                          handleDeleteProduct(product.id)
+                                        }
+                                        class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center"
+                                      >
+                                        Yes, I'm sure
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          (store.isPopoverConfirmOpen = false)
+                                        }
+                                        class="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-[#fff] rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+                                      >
+                                        No, cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </td>
@@ -356,61 +446,28 @@ export default defineComponent({
             </span>
             <ul class="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
               <li>
-                <a
-                  href="#"
+                <button
+                  disabled={store.currentPage <= 1}
+                  onClick={() => handlePageChange(store.currentPage - 1)}
                   class="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-[#fff] border border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
                 >
                   Previous
-                </a>
+                </button>
               </li>
               <li>
-                <a
-                  href="#"
-                  class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-[#fff] border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                >
-                  1
+                <a class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-[#fff] border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
+                  Page {store.currentPage}
                 </a>
               </li>
+
               <li>
-                <a
-                  href="#"
-                  class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-[#fff] border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                >
-                  2
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  aria-current="page"
-                  class="flex items-center justify-center px-3 h-8 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
-                >
-                  3
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-[#fff] border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                >
-                  4
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-[#fff] border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                >
-                  5
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
+                <button
+                  disabled={store.currentPage > totalPages}
+                  onClick={() => handlePageChange(store.currentPage + 1)}
                   class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-[#fff] border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
                 >
                   Next
-                </a>
+                </button>
               </li>
             </ul>
           </nav>

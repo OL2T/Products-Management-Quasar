@@ -1,8 +1,8 @@
 import gql from 'graphql-tag'
 
 const GET_PRODUCTS = gql`
-  query {
-    products {
+  query GetProducts($limit: Int, $offset: Int) {
+    products(limit: $limit, offset: $offset) {
       id
       name
       description
