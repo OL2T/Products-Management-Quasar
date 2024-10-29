@@ -1,22 +1,65 @@
 import { defineComponent, ref } from 'vue'
 import { useAuthStore } from '../store/authStore'
+import { arrow, flip, offset, shift, useFloating } from '@floating-ui/vue'
+
 export default defineComponent({
   setup() {
     const isShow = ref(false)
     const authStore = useAuthStore()
-    const handleClick = () => {
-      isShow.value = !isShow.value
+    const reference = ref(null)
+    const floating = ref(null)
+    const floatingArrow = ref(null)
+    // const handleClick = () => {
+    //   isShow.value = !isShow.value
+    // }
+    const handleMouseEnter = () => {
+      isShow.value = true
     }
 
-    console.log(authStore.user)
+    const handleMouseLeave = () => {
+      isShow.value = false
+    }
+    const { floatingStyles, placement, middlewareData } = useFloating(
+      reference,
+      floating,
+      {
+        placement: 'bottom-end',
+        middleware: [
+          offset(8),
+          flip(),
+          shift(),
+          arrow({ element: floatingArrow, padding: 20 })
+        ]
+        // open: isShow.value
+      }
+    )
 
+    const floatingArrowStyles = {
+      // left: middlewareData.value.arrow?.x
+      //   ? `${middlewareData.value.arrow.x}px`
+      //   : '',
+      // top: middlewareData.value.arrow?.y
+      //   ? `${middlewareData.value.arrow.y}px`
+      //   : '',
+      transform: placement.value.includes('bottom')
+        ? 'rotate(45deg)'
+        : placement.value.includes('top')
+        ? 'rotate(-135deg)'
+        : placement.value.includes('left')
+        ? 'rotate(135deg)'
+        : 'rotate(-45deg)'
+    }
     return () => (
       <main class="flex-1 sm:max-w-[calc(100%-280px)] ml-auto dark:bg-gray-500 h-[100vh]">
         <div class="header-main flex items-center justify-between w-full bg-[#fff] dark:bg-gray-800 dark:text-white p-3 shadow-sm">
           <h4 class="font-medium text-lg">Title</h4>
-          <div class="relative">
+          <div
+            onMouseenter={handleMouseEnter}
+            onMouseleave={handleMouseLeave}
+            class="relative"
+          >
             <div
-              onClick={handleClick}
+              ref={reference}
               class="flex items-center gap-x-2 hover:cursor-pointer"
             >
               <svg
@@ -38,50 +81,76 @@ export default defineComponent({
               </svg>
             </div>
             {isShow.value === true && (
-              <div
-                id="userDropdown"
-                class="z-10 absolute right-0 top-[50px]  bg-[#fff] divide-y divide-gray-100 rounded-lg  shadow-md border w-44 dark:bg-gray-700 dark:divide-gray-600"
-              >
-                <div class="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                  <div>Bonnie Green</div>
-                  <div class="font-medium truncate">name@flowbite.com</div>
-                </div>
-                <ul
-                  class="py-2 text-sm text-gray-700 dark:text-gray-200"
-                  aria-labelledby="avatarButton"
+              <div>
+                {/* <div className="absolute top-0 right-[10px] border-x-transparent border-t-transparent border-b-[10px]">
+                    <div class="w-0 h-0 absolute right-0 -translate-y-full border-x-transparent border-x-[11px] border-t-transparent border-t-[9px] border-b-[9px] border-b-gray-100 dark:border-b-gray-700"></div>
+                  </div> */}
+                <div
+                  ref={floating}
+                  style={floatingStyles.value}
+                  onMouseenter={handleMouseEnter}
+                  onMouseleave={handleMouseLeave}
+                  class="z-10 absolute right-0 top-[50px] bg-[#fff]  divide-y divide-gray-100 rounded-lg shadow-md w-44 dark:bg-gray-700 dark:divide-gray-600"
                 >
-                  <li>
-                    <a
-                      href="#"
-                      class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                    >
-                      Dashboard
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                    >
-                      Settings
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                    >
-                      Earnings
-                    </a>
-                  </li>
-                </ul>
-                <div class="py-1">
-                  <button
-                    onClick={authStore.logout}
-                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                  <div
+                    ref={floatingArrow}
+                    style={{
+                      ...floatingArrowStyles,
+                      position: 'absolute',
+                      left:
+                        middlewareData.value.arrow?.x != null
+                          ? `${middlewareData.value.arrow.x}px`
+                          : '',
+                      top:
+                        middlewareData.value.arrow?.y != null
+                          ? `${middlewareData.value.arrow.y}px`
+                          : '',
+                      width: '10px',
+                      height: '10px'
+                    }}
+                    class="bg-[#fff] dark:bg-gray-700 -mt-[5px] "
+                  ></div>
+                  <div class="px-4 py-3 text-sm text-gray-900 dark:text-white border-none">
+                    <div>Bonnie Green</div>
+                    <div class="font-medium truncate">name@flowbite.com</div>
+                  </div>
+                  <ul
+                    class="py-2 text-sm text-gray-700 dark:text-gray-200"
+                    aria-labelledby="avatarButton"
                   >
-                    Sign out
-                  </button>
+                    <li>
+                      <a
+                        href="#"
+                        class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                      >
+                        Dashboard
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href="#"
+                        class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                      >
+                        Settings
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href="#"
+                        class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                      >
+                        Earnings
+                      </a>
+                    </li>
+                  </ul>
+                  <div class="py-1">
+                    <button
+                      onClick={authStore.logout}
+                      class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                    >
+                      Sign out
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

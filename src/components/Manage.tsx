@@ -3,10 +3,6 @@ import { useProductStore } from '../store/productStore'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import TableSkeleton from './TableSkeleton'
 import Create from './Create'
-import { useQuery } from '@vue/apollo-composable'
-import { GET_PRODUCTS } from '../graphql/productQueries'
-import 'vue3-toastify/dist/index.css'
-import { toast } from 'vue3-toastify'
 
 export default defineComponent({
   setup() {
@@ -186,7 +182,7 @@ export default defineComponent({
           </div>
         </div>
         <div class="flex flex-col">
-          <div class="product-list w-full flex-1 max-h-[750px] overflow-auto">
+          <div class="product-list w-full flex-1 max-h-[750px]">
             <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 rounded-sm max-h-[750px] overflow-auto">
               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
@@ -441,7 +437,7 @@ export default defineComponent({
               </span>{' '}
               of{' '}
               <span class="font-semibold text-gray-900 dark:text-white">
-                1000
+                {store.products.length}
               </span>
             </span>
             <ul class="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
