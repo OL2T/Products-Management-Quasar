@@ -10,6 +10,8 @@ export default defineComponent({
     const floating = ref(null)
     const floatingArrow = ref(null)
 
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+
     const handleMouseEnter = () => {
       isShow.value = true
     }
@@ -17,19 +19,18 @@ export default defineComponent({
     const handleMouseLeave = () => {
       isShow.value = false
     }
-    const { floatingStyles, placement, middlewareData } = useFloating(
-      reference,
-      floating,
-      {
+    const { floatingStyles, placement, x, y, middlewareData, strategy } =
+      useFloating(reference, floating, {
+        // strategy: 'fixed',
         placement: 'bottom-end',
         middleware: [
           offset(8),
           flip(),
           shift(),
           arrow({ element: floatingArrow, padding: 20 })
-        ]
-      }
-    )
+        ],
+        transform: false
+      })
 
     const floatingArrowStyles = {
       // left: middlewareData.value.arrow?.x
@@ -59,8 +60,11 @@ export default defineComponent({
               ref={reference}
               class="flex items-center gap-x-2 hover:cursor-pointer"
             >
+              <div class="font-medium order-1">
+                {user.username ? user.username : ''}
+              </div>
               <svg
-                class="w-10 h-10 text-gray-800 dark:text-white"
+                class="w-10 h-10 text-gray-800 dark:text-white order-2"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -79,12 +83,18 @@ export default defineComponent({
             </div>
             {isShow.value === true && (
               <div>
+                {console.log(floatingStyles)}
                 <div
                   ref={floating}
-                  style={floatingStyles.value}
-                  onMouseenter={handleMouseEnter}
-                  onMouseleave={handleMouseLeave}
-                  class="z-10 absolute right-0 top-[50px] bg-[#fff] border  divide-y divide-gray-100 rounded-lg shadow-md w-44 dark:bg-gray-700 dark:divide-gray-600"
+                  style={{
+                    ...floatingStyles.value,
+                    width: 'max-content',
+                    left: `${x.value}px`,
+                    top: `${y.value}px`
+                  }}
+                  // onMouseenter={handleMouseEnter}
+                  // onMouseleave={handleMouseLeave}
+                  class="z-50 bg-[#fff] border  divide-y divide-gray-100 rounded-lg shadow-md  dark:bg-gray-700 dark:divide-gray-600"
                 >
                   <div
                     ref={floatingArrow}
@@ -98,15 +108,17 @@ export default defineComponent({
                       top:
                         middlewareData.value.arrow?.y != null
                           ? `${middlewareData.value.arrow.y}px`
-                          : '',
-                      width: '14px',
-                      height: '14px'
+                          : 'abc',
+                      width: '12px',
+                      height: '12px'
                     }}
-                    class="bg-[#fff] dark:bg-gray-700 -mt-[8px] border-l border-t "
+                    class="bg-[#fff] dark:bg-gray-700 -mt-[7px] border-l border-t "
                   ></div>
                   <div class="px-4 py-3 text-sm text-gray-900 dark:text-white border-none">
-                    <div>Bonnie Green</div>
-                    <div class="font-medium truncate">name@flowbite.com</div>
+                    <div>{user.username ? user.username : ''}</div>
+                    <div class="font-medium truncate">
+                      {user.email ? user.email : ''}
+                    </div>
                   </div>
                   <ul
                     class="py-2 text-sm text-gray-700 dark:text-gray-200"
@@ -155,6 +167,5 @@ export default defineComponent({
         </div>
       </main>
     )
-  },
-  render() {}
+  }
 })
