@@ -1,7 +1,6 @@
 import { defineComponent, ref } from 'vue'
 import { useAuthStore } from '../store/authStore'
 import { arrow, flip, offset, shift, useFloating } from '@floating-ui/vue'
-
 export default defineComponent({
   setup() {
     const isShow = ref(false)
@@ -24,7 +23,7 @@ export default defineComponent({
         // strategy: 'fixed',
         placement: 'bottom-end',
         middleware: [
-          offset(8),
+          offset(),
           flip(),
           shift(),
           arrow({ element: floatingArrow, padding: 20 })
@@ -83,7 +82,6 @@ export default defineComponent({
             </div>
             {isShow.value === true && (
               <div>
-                {console.log(floatingStyles)}
                 <div
                   ref={floating}
                   style={{
@@ -92,8 +90,8 @@ export default defineComponent({
                     left: `${x.value}px`,
                     top: `${y.value}px`
                   }}
-                  // onMouseenter={handleMouseEnter}
-                  // onMouseleave={handleMouseLeave}
+                  onMouseenter={handleMouseEnter}
+                  onMouseleave={handleMouseLeave}
                   class="z-50 bg-[#fff] border  divide-y divide-gray-100 rounded-lg shadow-md  dark:bg-gray-700 dark:divide-gray-600"
                 >
                   <div

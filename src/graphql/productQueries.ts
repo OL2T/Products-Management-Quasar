@@ -12,6 +12,15 @@ const GET_PRODUCTS = gql`
     }
   }
 `
+const GET_TOTAL_PRODUCTS = gql`
+  query GetTotalProducts {
+    products_aggregate {
+      aggregate {
+        count
+      }
+    }
+  }
+`
 
 const ADD_PRODUCT = gql`
   mutation InsertProducts(
@@ -104,5 +113,6 @@ export {
   ADD_PRODUCT,
   DELETE_PRODUCT,
   GET_PRODUCT_BY_ID,
-  UPDATE_PRODUCT
+  UPDATE_PRODUCT,
+  GET_TOTAL_PRODUCTS
 }

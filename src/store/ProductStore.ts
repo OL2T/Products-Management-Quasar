@@ -5,6 +5,7 @@ import {
   DELETE_PRODUCT,
   GET_PRODUCT_BY_ID,
   GET_PRODUCTS,
+  GET_TOTAL_PRODUCTS,
   UPDATE_PRODUCT
 } from '../graphql/productQueries'
 import { useMutation, useQuery } from '@vue/apollo-composable'
@@ -32,8 +33,6 @@ export const useProductStore = defineStore('products', () => {
   const itemsPerPage = ref(10) // Set items per page
   const totalItems = ref(0)
   const routes = useRoute()
-  const limit = ref(10)
-  const offset = ref(0)
 
   const handleChangeInput = (e: Event) => {
     const target = e.target as HTMLInputElement
@@ -50,25 +49,33 @@ export const useProductStore = defineStore('products', () => {
     return products.value.find((product) => product.id === routes.params.id)
   })
 
-  const fetchProductById = (id: string) => {
-    const { result, loading, error } = useQuery(GET_PRODUCT_BY_ID, { id })
-
-    watchEffect(() => {
-      isLoading.value = loading.value
-      if (result.value && result.value.products.length > 0) {
-        product.value = result.value.products[0]
-      }
-      if (error.value) {
-        console.error('Error fetching product details:', error.value)
-        toast('Error fetching product details', {
-          theme: 'auto',
-          type: 'error',
-          position: 'top-right'
-        })
-      }
-    })
-  }
   // Fetch products
+
+  const {
+    result: totalProductsResult,
+    loading: totalLoading,
+    error: totalError
+  } = useQuery(GET_TOTAL_PRODUCTS)
+
+  watchEffect(() => {
+    isLoading.value = totalLoading.value
+    if (totalProductsResult.value) {
+      totalItems.value =
+        totalProductsResult.value.products_aggregate.aggregate.count // Update total items from the aggregate query
+    }
+
+    console.log('Total', totalItems.value)
+
+    if (totalError.value) {
+      console.error('Error fetching total products:', totalError.value)
+      toast('Error fetching total products', {
+        theme: 'auto',
+        type: 'error',
+        position: 'top-right'
+      })
+    }
+  })
+
   const { result, loading, error, fetchMore } = useQuery(GET_PRODUCTS, {
     limit: itemsPerPage.value,
     offset: (currentPage.value - 1) * itemsPerPage.value
@@ -78,9 +85,6 @@ export const useProductStore = defineStore('products', () => {
     isLoading.value = loading.value
     if (result.value) {
       products.value = result.value.products
-      totalItems.value = result.value.totalCount || products.value.length
-      // console.log(products.value)
-      // console.log(totalItems.value)
     }
     if (error.value) {
       console.error('Error fetching products:', error.value)
@@ -89,6 +93,7 @@ export const useProductStore = defineStore('products', () => {
         type: 'error',
         position: 'top-right'
       })
+      return
     }
   })
 
@@ -104,6 +109,25 @@ export const useProductStore = defineStore('products', () => {
           ...previousResult,
           products: fetchMoreResult.products // Cập nhật các sản phẩm mới cho trang hiện tại
         }
+      }
+    })
+  }
+
+  const fetchProductById = (id: string) => {
+    const { result, loading, error } = useQuery(GET_PRODUCT_BY_ID, { id })
+
+    watchEffect(() => {
+      isLoading.value = loading.value
+      if (result.value && result.value.products.length > 0) {
+        product.value = result.value.products[0]
+      }
+      if (error.value) {
+        console.error('Error fetching product details:', error.value)
+        toast('Error fetching product details', {
+          theme: 'auto',
+          type: 'error',
+          position: 'top-right'
+        })
       }
     })
   }
@@ -124,13 +148,18 @@ export const useProductStore = defineStore('products', () => {
         const addedProduct = response.data.insert_products.returning[0]
         products.value = [...products.value, addedProduct]
         // products.value.push(addedProduct)
+        totalItems.value += 1 // Tăng tổng số sản phẩm
 
+        // Kiểm tra xem tổng số sản phẩm có vượt quá số lượng sản phẩm trên mỗi trang hay không
+        if (products.value.length > itemsPerPage.value) {
+          changePage(currentPage.value + 1) // Chuyển đến trang tiếp theo
+        }
+        isShowCreateModal.value = false
         toast('Product added successfully', {
           theme: 'auto',
           type: 'success',
           position: 'top-right'
         })
-        isShowCreateModal.value = false
       } else {
         throw new Error('Failed to add product. No product returned.')
       }
@@ -158,6 +187,13 @@ export const useProductStore = defineStore('products', () => {
 
       if (response?.data?.delete_products?.affected_rows) {
         products.value = products.value.filter((product) => product.id !== id)
+
+        totalItems.value -= 1 // Giảm tổng số sản phẩm
+
+        // Kiểm tra xem có cần chuyển trang hay không
+        if (products.value.length === 0 && currentPage.value > 1) {
+          changePage(currentPage.value - 1) // Nếu không còn sản phẩm nào, quay lại trang trước
+        }
         toast('Product deleted successfully', {
           theme: 'auto',
           type: 'success',
@@ -222,6 +258,9 @@ export const useProductStore = defineStore('products', () => {
   }
 
   return {
+    result,
+    loading,
+    error,
     product,
     products,
     isLoading,
@@ -232,7 +271,6 @@ export const useProductStore = defineStore('products', () => {
     currentPage,
     totalItems,
     itemsPerPage,
-    // fetchProducts,
     handleChangeInput,
     handleAddProduct,
     handleDeleteProduct,

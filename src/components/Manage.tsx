@@ -1,4 +1,11 @@
-import { defineComponent, onMounted, ref, watchEffect } from 'vue'
+import {
+  computed,
+  defineComponent,
+  onMounted,
+  ref,
+  watch,
+  watchEffect
+} from 'vue'
 import { useProductStore } from '../store/productStore'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import TableSkeleton from './TableSkeleton'
@@ -30,12 +37,18 @@ export default defineComponent({
 
     const handleDeleteProduct = (id: string) => {
       store.handleDeleteProduct(id)
+      store.isPopoverConfirmOpen = false
     }
+
+    const totalPages = computed(() => {
+      return Math.ceil(store.totalItems / store.itemsPerPage)
+    })
 
     return {
       store,
       activePopoverId,
       router,
+      totalPages,
       handleShowPopover,
       handleDeleteProduct,
       handleShowConfirmPopover,
@@ -48,14 +61,13 @@ export default defineComponent({
       store,
       activePopoverId,
       router,
+      totalPages,
       handleShowPopover,
       handleShowConfirmPopover,
       handleDeleteProduct,
       handlePageChange
     } = this
-    const totalPages = Math.ceil(store.totalItems / store.itemsPerPage)
-    // console.log('Total page:', totalPages)
-    // console.log(store.products)
+
     return (
       <div class="relative">
         <div class="filter flex items-center mb-5 gap-x-4">
@@ -182,7 +194,7 @@ export default defineComponent({
           </div>
         </div>
         <div class="flex flex-col">
-          <div class="product-list w-full flex-1 max-h-[750px]">
+          <div class="product-list w-full flex-1 max-h-[750px] overflow-x-auto">
             <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 rounded-sm max-h-[750px] overflow-auto">
               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
@@ -352,6 +364,9 @@ export default defineComponent({
                                 <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-4 w-full max-w-md max-h-full">
                                   <div class="relative bg-[#fff] rounded-lg shadow dark:bg-gray-700">
                                     <button
+                                      onClick={() =>
+                                        (store.isPopoverConfirmOpen = false)
+                                      }
                                       type="button"
                                       class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
                                       data-modal-hide="popup-modal"
@@ -433,11 +448,15 @@ export default defineComponent({
             <span class="text-sm font-normal text-gray-500 dark:text-gray-400 mb-4 md:mb-0 block w-full md:inline md:w-auto">
               Showing{' '}
               <span class="font-semibold text-gray-900 dark:text-white">
-                1-10
+                {(store.currentPage - 1) * store.itemsPerPage + 1}-
+                {Math.min(
+                  store.currentPage * store.itemsPerPage,
+                  store.totalItems
+                )}
               </span>{' '}
               of{' '}
               <span class="font-semibold text-gray-900 dark:text-white">
-                {store.products.length}
+                {store.totalItems}
               </span>
             </span>
             <ul class="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
@@ -450,15 +469,24 @@ export default defineComponent({
                   Previous
                 </button>
               </li>
-              <li>
-                <a class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-[#fff] border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-                  Page {store.currentPage}
-                </a>
-              </li>
+              {Array.from({ length: totalPages }, (_, index) => (
+                <li key={index + 1}>
+                  <button
+                    onClick={() => handlePageChange(index + 1)}
+                    class={`flex items-center justify-center px-3 h-8 leading-tight text-gray-500  border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${
+                      store.currentPage === index + 1
+                        ? 'is-active bg-blue-50 text-gray-700 dark:bg-gray-700 dark:text-white'
+                        : 'bg-[#fff] dark:bg-gray-800'
+                    }`} // Đánh dấu trang hiện tại
+                  >
+                    {index + 1}
+                  </button>
+                </li>
+              ))}
 
               <li>
                 <button
-                  disabled={store.currentPage > totalPages}
+                  disabled={store.currentPage >= totalPages}
                   onClick={() => handlePageChange(store.currentPage + 1)}
                   class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-[#fff] border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
                 >

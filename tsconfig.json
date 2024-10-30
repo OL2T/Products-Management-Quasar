@@ -13,17 +13,11 @@
     "sourceMap": true,
     "allowJs": true,
     "baseUrl": ".",
-    "lib": [
-      "esnext",
-      "ScriptHost",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["esnext", "ScriptHost", "DOM", "DOM.Iterable"],
     "paths": {
-      "@/*": [
-        "*"
-      ]
+      "@/*": ["*"]
     }
+    // "skipLibCheck": true
   },
   "include": [
     "./src/**/*.ts",
@@ -32,8 +26,5 @@
     "./tests/**/*.ts",
     "./tests/**/*.tsx"
   ],
-  "exclude": [
-    "./**/*.js",
-    "node_modules"
-  ]
+  "exclude": ["./**/*.js", "node_modules"]
 }
