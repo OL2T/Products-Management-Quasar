@@ -1,14 +1,23 @@
 import gql from 'graphql-tag'
 
 const GET_PRODUCTS = gql`
-  query {
-    products {
+  query GetProducts($limit: Int, $offset: Int) {
+    products(limit: $limit, offset: $offset) {
       id
       name
       description
       category
       stock
       price
+    }
+  }
+`
+const GET_TOTAL_PRODUCTS = gql`
+  query GetTotalProducts {
+    products_aggregate {
+      aggregate {
+        count
+      }
     }
   }
 `
@@ -104,5 +113,6 @@ export {
   ADD_PRODUCT,
   DELETE_PRODUCT,
   GET_PRODUCT_BY_ID,
-  UPDATE_PRODUCT
+  UPDATE_PRODUCT,
+  GET_TOTAL_PRODUCTS
 }

@@ -1,5 +1,5 @@
-import { computed, defineComponent, onMounted, reactive, ref } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { computed, defineComponent, onMounted, reactive, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useProductStore } from '../store/productStore'
 import useVueValidate from '@vuelidate/core'
 import { required, minLength, minValue } from '@vuelidate/validators'
@@ -12,23 +12,41 @@ export default defineComponent({
     const route = useRoute()
     const router = useRouter()
 
-    let formEdit = reactive({
-      name: '',
-      description: '',
-      category: '',
-      stock: 0,
-      price: 0
+    const formEdit = reactive({
+      name: route.params.id ? store.product?.name ?? '' : '',
+      description: route.params.id ? store.product?.description ?? '' : '',
+      category: route.params.id ? store.product?.category ?? '' : '',
+      stock: route.params.id ? store.product?.stock ?? 0 : 0,
+      price: route.params.id ? store.product?.price ?? 0 : 0
     })
 
-    onMounted(() => {
+    const fetchProduct = async () => {
       const productId = route.params.id
       if (productId) {
-        store.fetchProductById(productId as string)
-        if (store.product) {
-          formEdit = { ...store.product }
-        }
+        await store.fetchProductById(productId as string)
       }
+    }
+
+    onMounted(() => {
+      fetchProduct()
     })
+
+    // Watch for product changes and update formEdit when store.product is ready
+    watch(
+      () => store.product,
+      (product) => {
+        if (product) {
+          Object.assign(formEdit, {
+            name: product.name || '',
+            description: product.description || '',
+            category: product.category || '',
+            stock: product.stock || 0,
+            price: product.price || 0
+          })
+        }
+      },
+      { immediate: true } // Run the watch handler immediately upon component mount
+    )
 
     const rules = computed(() => ({
       name: { required, minLength: minLength(3) },
@@ -45,7 +63,10 @@ export default defineComponent({
 
       const result = await v$.value.$validate()
       if (result) {
-        store.handleAddProduct({ ...formEdit })
+        await store.handleUpdateProduct({
+          id: route.params.id as string,
+          ...formEdit
+        })
 
         v$.value.$reset()
 
@@ -55,6 +76,8 @@ export default defineComponent({
         formEdit.category = ''
         formEdit.stock = 0
         formEdit.price = 0
+
+        router.push('/products')
       }
     }
     return () => (
@@ -112,22 +135,10 @@ export default defineComponent({
             type="submit"
             class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
           >
-            Edit
+            Update
           </button>
-          {/* <button type="button">
-            <RouterLink
-              to="/products"
-              class="inline-block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5  dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-            >
-              Cancel
-            </RouterLink>
-          </button> */}
         </div>
       </form>
     )
   }
-
-  // render() {
-  //   const { name, description, category, stock, price, handleSubmit } = this
-  // }
 })

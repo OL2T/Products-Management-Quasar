@@ -33,7 +33,7 @@ export default defineComponent({
       const result = await v$.value.$validate()
       if (result) {
         store.handleAddProduct({ ...formCreate })
-
+        // store.fetchProducts()
         v$.value.$reset()
 
         // Clear input
@@ -101,20 +101,8 @@ export default defineComponent({
           >
             Create
           </button>
-          {/* <button type="button">
-            <RouterLink
-              to="/products"
-              class="inline-block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5  dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-            >
-              Cancel
-            </RouterLink>
-          </button> */}
         </div>
       </form>
     )
   }
-
-  // render() {
-  //   const { name, description, category, stock, price, handleSubmit } = this
-  // }
 })

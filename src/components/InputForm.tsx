@@ -38,12 +38,12 @@ export default defineComponent({
           class={[
             'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500',
             props.error &&
-              'bg-red-50 border border-red-500 text-red-900 placeholder-red-700 dark:bg-red-200 dark:text-red-500'
+              'bg-red-50 border border-red-500 text-red-900 placeholder-red-700 dark:bg-red-200 dark:text-red-500 dark:placeholder:text-[#fff]'
           ]}
         />
         <div class="flex h-6 gap-x-2">
           {props.error && props.errorMessage && (
-            <div class="flex gap-x-2 text-red-500 text-[12px]">
+            <div class="flex gap-x-2 text-red-500 dark:text-red-400 text-[13px]">
               {props.errorMessage}
             </div>
           )}

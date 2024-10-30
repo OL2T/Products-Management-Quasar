@@ -156,7 +156,7 @@ module.exports = configure(function (ctx) {
 
     devServer: {
       // https: true,
-      // port: 8080,
+      port: 8090,
       open: true // opens browser window automatically
     },
 
@@ -257,5 +257,8 @@ module.exports = configure(function (ctx) {
         // chainWebpack also available besides this extendWebpack
       }
     }
+    // bin: {
+    //   npm: 'npm'
+    // }
   }
 })

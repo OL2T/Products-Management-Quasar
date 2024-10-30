@@ -9,12 +9,14 @@ export default defineComponent({
   setup() {
     const authStore = useAuthStore()
     const formRegister = reactive({
+      username: '',
       email: '',
       password: '',
       confirmPassword: ''
     })
 
     const rules = computed(() => ({
+      username: { required, minLength: minLength(6) },
       email: { required, email },
       password: { required, minLength: minLength(6) },
       confirmPassword: {
@@ -32,11 +34,16 @@ export default defineComponent({
       const result = await v$.value.$validate()
       if (result) {
         console.log(formRegister)
-        authStore.register(formRegister.email, formRegister.password)
+        authStore.register(
+          formRegister.email,
+          formRegister.password,
+          formRegister.username
+        )
 
         v$.value.$reset()
 
         formRegister.email = ''
+        formRegister.username = ''
         formRegister.password = ''
         formRegister.confirmPassword = ''
       }
@@ -86,7 +93,18 @@ export default defineComponent({
                 >
                   <div class="">
                     <InputForm
-                      type="email"
+                      type="text"
+                      name="User name"
+                      id="username"
+                      placeholder="johndoe"
+                      v-model={formRegister.username}
+                      error={v$.value.username.$error}
+                      errorMessage={v$.value.username.$errors.map((error) => (
+                        <span class="text-red-500">{error.$message}</span>
+                      ))}
+                    />
+                    <InputForm
+                      type="username"
                       name="Email"
                       id="email"
                       placeholder="alex@gmail.com"

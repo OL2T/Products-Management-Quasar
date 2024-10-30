@@ -25,31 +25,28 @@ export default defineStore('user', () => {
     )
   })
 
-  const fetchUsers = () => {
-    const { result, loading, error } = useQuery(GET_USERS)
+  const { result, loading, error } = useQuery(GET_USERS)
 
-    watchEffect(() => {
-      isLoading.value = loading.value
-      if (result.value) {
-        users.value = result.value.users
-      }
-      if (error.value) {
-        console.error('Error fetching users:', error.value)
-        toast('Error fetching users', {
-          theme: 'auto',
-          type: 'error',
-          position: 'top-right'
-        })
-      }
-    })
-  }
+  watchEffect(() => {
+    isLoading.value = loading.value
+    if (result.value) {
+      users.value = result.value.users
+    }
+    if (error.value) {
+      console.error('Error fetching users:', error.value)
+      toast('Error fetching users', {
+        theme: 'auto',
+        type: 'error',
+        position: 'top-right'
+      })
+    }
+  })
 
   return {
     users,
     isLoading,
     querySearch,
     filterUsers,
-    handleChangeInput,
-    fetchUsers
+    handleChangeInput
   }
 })
