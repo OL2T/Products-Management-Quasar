@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref, watchEffect } from 'vue'
+import { computed, onMounted, ref, watchEffect } from 'vue'
 import {
   ADD_PRODUCT,
   DELETE_PRODUCT,
@@ -11,7 +11,7 @@ import {
 import { useMutation, useQuery } from '@vue/apollo-composable'
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 interface Product {
   id: string
@@ -33,11 +33,11 @@ export const useProductStore = defineStore('products', () => {
   const itemsPerPage = ref(10) // Set items per page
   const totalItems = ref(0)
   const routes = useRoute()
+  const router = useRouter()
 
-  const handleChangeInput = (e: Event) => {
-    const target = e.target as HTMLInputElement
-    querySearch.value = target.value
-  }
+  const totalPages = computed(() => {
+    return Math.ceil(totalItems.value / itemsPerPage.value)
+  })
 
   const filterProducts = computed(() => {
     return products.value.filter((product) =>
@@ -54,32 +54,34 @@ export const useProductStore = defineStore('products', () => {
   const {
     result: totalProductsResult,
     loading: totalLoading,
-    error: totalError
-  } = useQuery(GET_TOTAL_PRODUCTS)
+    error: totalError,
+    refetch: totalProductRefetch
+  } = useQuery(GET_TOTAL_PRODUCTS, {
+    searchQuery: `%${querySearch.value}%`
+  })
 
-  watchEffect(() => {
+  watchEffect(async () => {
     isLoading.value = totalLoading.value
     if (totalProductsResult.value) {
       totalItems.value =
-        totalProductsResult.value.products_aggregate.aggregate.count // Update total items from the aggregate query
+        totalProductsResult.value.products_aggregate.aggregate.count
     }
 
-    console.log('Total', totalItems.value)
+    console.log('Total Item From GET TOTAL', totalItems.value)
 
     if (totalError.value) {
       console.error('Error fetching total products:', totalError.value)
-      toast('Error fetching total products', {
-        theme: 'auto',
-        type: 'error',
-        position: 'top-right'
-      })
     }
   })
 
-  const { result, loading, error, fetchMore } = useQuery(GET_PRODUCTS, {
-    limit: itemsPerPage.value,
-    offset: (currentPage.value - 1) * itemsPerPage.value
-  })
+  const { result, loading, error, fetchMore, refetch } = useQuery(
+    GET_PRODUCTS,
+    {
+      limit: itemsPerPage.value,
+      offset: (currentPage.value - 1) * itemsPerPage.value,
+      searchQuery: `%${querySearch.value}%`
+    }
+  )
 
   watchEffect(async () => {
     isLoading.value = loading.value
@@ -96,8 +98,55 @@ export const useProductStore = defineStore('products', () => {
       return
     }
   })
+  const handleChangeInput = async (e: KeyboardEvent) => {
+    const target = e.target as HTMLInputElement
+    querySearch.value = target.value
+
+    if (e.key === 'Enter') {
+      currentPage.value = 1 // Đặt lại trang hiện tại về 1 khi tìm kiếm mới
+      await performSearch() // Gọi hàm tìm kiếm
+    }
+  }
+
+  const performSearch = async () => {
+    await refetch({
+      limit: itemsPerPage.value,
+      offset: 0,
+      searchQuery: `%${querySearch.value}%`
+    })
+
+    // Refetch total items with the current search query
+    const refetchResult = await totalProductRefetch({
+      searchQuery: `%${querySearch.value}%`
+    })
+    if (
+      refetchResult &&
+      refetchResult.data &&
+      refetchResult.data.products_aggregate
+    ) {
+      totalItems.value = refetchResult.data.products_aggregate.aggregate.count
+      console.log('Total Items After Search:', totalItems.value)
+    }
+    router.replace({
+      query: { ...routes.query, search: querySearch.value }
+    })
+  }
+
+  watchEffect(() => {
+    performSearch()
+  })
+
+  const searchQuery = routes.query.search as string
+  onMounted(() => {
+    if (searchQuery) {
+      querySearch.value = searchQuery
+      performSearch()
+    }
+  })
 
   const changePage = (page: number) => {
+    if (page < 1 || page > totalPages.value) return
+
     currentPage.value = page
     const newOffset = (currentPage.value - 1) * itemsPerPage.value
 
@@ -147,12 +196,12 @@ export const useProductStore = defineStore('products', () => {
       if (response?.data?.insert_products?.returning?.length) {
         const addedProduct = response.data.insert_products.returning[0]
         products.value = [...products.value, addedProduct]
-        // products.value.push(addedProduct)
-        totalItems.value += 1 // Tăng tổng số sản phẩm
 
-        // Kiểm tra xem tổng số sản phẩm có vượt quá số lượng sản phẩm trên mỗi trang hay không
+        totalItems.value += 1
+        await totalProductRefetch()
+
         if (products.value.length > itemsPerPage.value) {
-          changePage(currentPage.value + 1) // Chuyển đến trang tiếp theo
+          changePage(currentPage.value + 1)
         }
         isShowCreateModal.value = false
         toast('Product added successfully', {
@@ -187,12 +236,13 @@ export const useProductStore = defineStore('products', () => {
 
       if (response?.data?.delete_products?.affected_rows) {
         products.value = products.value.filter((product) => product.id !== id)
+        await totalProductRefetch()
 
-        totalItems.value -= 1 // Giảm tổng số sản phẩm
+        totalItems.value -= 1
+        console.log('handleDelete: ', totalItems.value)
 
-        // Kiểm tra xem có cần chuyển trang hay không
         if (products.value.length === 0 && currentPage.value > 1) {
-          changePage(currentPage.value - 1) // Nếu không còn sản phẩm nào, quay lại trang trước
+          changePage(currentPage.value - 1)
         }
         toast('Product deleted successfully', {
           theme: 'auto',
@@ -228,8 +278,8 @@ export const useProductStore = defineStore('products', () => {
       if (response?.data?.update_products?.affected_rows) {
         const updated = response.data.update_products.returning[0]
         const index = products.value.findIndex((p) => p.id === updated.id)
-        console.log('Updated product:', updated)
-        console.log(index)
+        // console.log('Updated product:', updated)
+        // console.log(index)
         if (index !== -1) {
           console.log(products.value[index])
           products.value = [
@@ -242,7 +292,8 @@ export const useProductStore = defineStore('products', () => {
         toast('Product updated successfully', {
           theme: 'auto',
           type: 'success',
-          position: 'top-right'
+          position: 'top-right',
+          onClose: () => router.push({ path: '/products' })
         })
       } else {
         throw new Error('Failed to update product. No rows affected.')
@@ -276,6 +327,7 @@ export const useProductStore = defineStore('products', () => {
     handleDeleteProduct,
     fetchProductById,
     handleUpdateProduct,
-    changePage
+    changePage,
+    searchQuery
   }
 })

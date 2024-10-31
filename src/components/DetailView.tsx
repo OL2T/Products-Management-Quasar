@@ -21,7 +21,15 @@ export default defineComponent({
     return () => (
       <div>
         {store.isLoading ? (
-          <div>Loading...</div>
+          <div role="status" class="max-w-sm animate-pulse">
+            <div class="h-5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
+            <div class="h-4 bg-gray-200 rounded-full dark:bg-gray-700 max-w-[360px] mb-2.5"></div>
+            <div class="h-4 bg-gray-200 rounded-full dark:bg-gray-700 mb-2.5"></div>
+            <div class="h-4 bg-gray-200 rounded-full dark:bg-gray-700 max-w-[330px] mb-2.5"></div>
+            <div class="h-4 bg-gray-200 rounded-full dark:bg-gray-700 max-w-[300px] mb-2.5"></div>
+            <div class="h-4 bg-gray-200 rounded-full dark:bg-gray-700 max-w-[360px]"></div>
+            <span class="sr-only">Loading...</span>
+          </div>
         ) : (
           store.product && (
             <div class="bg-[#fff] dark:bg-gray-800 text-gray-800 dark:text-white p-4 rounded-md">
@@ -47,7 +55,7 @@ export default defineComponent({
                 </div>
                 <div class=" font-medium mb-4">
                   Price:
-                  <span class="font-normal"> {store.product.price}</span>
+                  <span class="font-normal"> ${store.product.price}</span>
                 </div>
               </div>
               <button

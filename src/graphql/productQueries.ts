@@ -1,8 +1,12 @@
 import gql from 'graphql-tag'
 
 const GET_PRODUCTS = gql`
-  query GetProducts($limit: Int, $offset: Int) {
-    products(limit: $limit, offset: $offset) {
+  query GetProducts($limit: Int, $offset: Int, $searchQuery: String) {
+    products(
+      where: { name: { _ilike: $searchQuery } }
+      limit: $limit
+      offset: $offset
+    ) {
       id
       name
       description
@@ -13,8 +17,8 @@ const GET_PRODUCTS = gql`
   }
 `
 const GET_TOTAL_PRODUCTS = gql`
-  query GetTotalProducts {
-    products_aggregate {
+  query GET_TOTAL_PRODUCTS($searchQuery: String!) {
+    products_aggregate(where: { name: { _ilike: $searchQuery } }) {
       aggregate {
         count
       }

@@ -1,13 +1,11 @@
-import Create from '../components/Create'
-import Manage from '../components/Manage'
-import ProductList from '../components/ProductList'
 import Dashboard from '../pages/Dashboard'
 import Index from '../pages/Index'
 import Customers from '../pages/Customers'
 import Login from '../pages/Login'
 import Register from '../pages/Register'
 import DetailView from '../components/DetailView'
-import Edit from '../components/Edit'
+import Update from '../components/Update'
+import ProductList from '../components/ProductList'
 
 const routes = [
   {
@@ -25,7 +23,7 @@ const routes = [
       },
       {
         path: 'products',
-        component: Manage
+        component: ProductList
       },
       {
         path: 'product/:id',
@@ -33,12 +31,8 @@ const routes = [
       },
       {
         path: 'update/:id',
-        component: Edit
+        component: Update
       }
-      // {
-      //   path: '/products',
-      //   component: ProductList
-      // }
     ]
   },
   {

@@ -76,8 +76,6 @@ export default defineComponent({
         formEdit.category = ''
         formEdit.stock = 0
         formEdit.price = 0
-
-        router.push('/products')
       }
     }
     return () => (
