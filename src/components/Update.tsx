@@ -1,6 +1,6 @@
 import { computed, defineComponent, onMounted, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useProductStore } from '../store/productStore'
+import { useProductStore } from '../store/ProductStore'
 import useVueValidate from '@vuelidate/core'
 import { required, minLength, minValue } from '@vuelidate/validators'
 import InputForm from './InputForm'

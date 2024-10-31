@@ -1,9 +1,10 @@
 import { computed, defineComponent, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { useProductStore } from '../store/productStore'
+
 import useVueValidate from '@vuelidate/core'
 import { required, minLength, minValue } from '@vuelidate/validators'
 import InputForm from './InputForm'
+import { useProductStore } from '../store/ProductStore'
 
 export default defineComponent({
   name: 'Create Products',

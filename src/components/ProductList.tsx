@@ -6,7 +6,7 @@ import {
   watch,
   watchEffect
 } from 'vue'
-import { useProductStore } from '../store/productStore'
+import { useProductStore } from '../store/ProductStore'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import TableSkeleton from './TableSkeleton'
 import Create from './Create'

@@ -1,5 +1,5 @@
 import { defineComponent, onMounted } from 'vue'
-import { useProductStore } from '../store/productStore'
+import { useProductStore } from '../store/ProductStore'
 import { useRoute, useRouter } from 'vue-router'
 import path from 'path'
 export default defineComponent({
