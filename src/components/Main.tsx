@@ -1,6 +1,7 @@
-import { defineComponent, ref } from 'vue'
+import { defineComponent, ref, Transition, watch } from 'vue'
 import { useAuthStore } from '../store/authStore'
 import { arrow, flip, offset, shift, useFloating } from '@floating-ui/vue'
+import { RouterLink, useRoute } from 'vue-router'
 export default defineComponent({
   setup() {
     const isShow = ref(false)
@@ -10,7 +11,29 @@ export default defineComponent({
     const floatingArrow = ref(null)
 
     const user = JSON.parse(localStorage.getItem('user') || '{}')
+    const currentTitle = ref('') // Tiêu đề hiện tại
 
+    const route = useRoute() // Lấy thông tin route hiện tại
+
+    // Hàm cập nhật tiêu đề dựa trên đường dẫn
+    const updateTitle = () => {
+      switch (route.path) {
+        case '/dashboard':
+          currentTitle.value = 'Dashboard'
+          break
+        case '/products':
+          currentTitle.value = 'Products'
+          break
+        case '/customers':
+          currentTitle.value = 'Users'
+          break
+        default:
+          currentTitle.value = '' // Có thể thay đổi theo ý muốn
+      }
+    }
+
+    // Theo dõi thay đổi đường dẫn
+    watch(route, updateTitle, { immediate: true })
     const handleMouseEnter = () => {
       isShow.value = true
     }
@@ -49,7 +72,7 @@ export default defineComponent({
     return () => (
       <main class="flex-1 sm:max-w-[calc(100%-280px)] ml-auto dark:bg-gray-500 h-[100vh]">
         <div class="header-main flex items-center justify-between w-full bg-[#fff] dark:bg-gray-800 dark:text-white p-3 shadow-sm">
-          <h4 class="font-medium text-lg">Title</h4>
+          <h4 class="font-medium text-lg">{currentTitle.value}</h4>
           <div
             onMouseenter={handleMouseEnter}
             onMouseleave={handleMouseLeave}
@@ -123,28 +146,20 @@ export default defineComponent({
                     aria-labelledby="avatarButton"
                   >
                     <li>
-                      <a
-                        href="#"
+                      <RouterLink
+                        to="/dashboard"
                         class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
                       >
                         Dashboard
-                      </a>
+                      </RouterLink>
                     </li>
                     <li>
-                      <a
-                        href="#"
+                      <RouterLink
+                        to="/settings"
                         class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
                       >
                         Settings
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                      >
-                        Earnings
-                      </a>
+                      </RouterLink>
                     </li>
                   </ul>
                   <div class="py-1">
