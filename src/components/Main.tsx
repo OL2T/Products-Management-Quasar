@@ -27,6 +27,12 @@ export default defineComponent({
         case '/customers':
           currentTitle.value = 'Users'
           break
+        case '/product/:id':
+          currentTitle.value = 'Product detail'
+          break
+        case '/update/:id':
+          currentTitle.value = 'Update product'
+          break
         default:
           currentTitle.value = '' // Có thể thay đổi theo ý muốn
       }

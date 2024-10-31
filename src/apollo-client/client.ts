@@ -14,6 +14,21 @@ const httpLink = new HttpLink({
   }
 })
 
+const cache = new InMemoryCache({
+  typePolicies: {
+    Query: {
+      fields: {
+        products: {
+          keyArgs: false, // Không phân biệt các args, merge tất cả
+          merge(existing = [], incoming) {
+            return [...existing, ...incoming]
+          }
+        }
+      }
+    }
+  }
+})
+
 const client = new ApolloClient({
   link: httpLink,
   cache: new InMemoryCache()
