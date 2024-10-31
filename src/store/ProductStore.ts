@@ -103,8 +103,8 @@ export const useProductStore = defineStore('products', () => {
     querySearch.value = target.value
 
     if (e.key === 'Enter') {
-      currentPage.value = 1 // Đặt lại trang hiện tại về 1 khi tìm kiếm mới
-      await performSearch() // Gọi hàm tìm kiếm
+      currentPage.value = 1
+      await performSearch()
     }
   }
 
