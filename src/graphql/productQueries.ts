@@ -14,6 +14,33 @@ const GET_PRODUCTS = gql`
       stock
       price
     }
+    products_aggregate(where: { name: { _ilike: $searchQuery } }) {
+      aggregate {
+        count
+      }
+    }
+  }
+`
+const GET_FILTERED_PRODUCT = gql`
+  query GetFilteredProducts($limit: Int, $offset: Int, $category: String) {
+    products(
+      where: { category: { _eq: $category } }
+      limit: $limit
+      offset: $offset
+    ) {
+      id
+      name
+      description
+      category
+      stock
+      price
+    }
+
+    products_aggregate(where: { category: { _eq: $category } }) {
+      aggregate {
+        count
+      }
+    }
   }
 `
 const GET_TOTAL_PRODUCTS = gql`
@@ -118,5 +145,6 @@ export {
   DELETE_PRODUCT,
   GET_PRODUCT_BY_ID,
   UPDATE_PRODUCT,
-  GET_TOTAL_PRODUCTS
+  GET_TOTAL_PRODUCTS,
+  GET_FILTERED_PRODUCT
 }

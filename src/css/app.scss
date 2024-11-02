@@ -10,19 +10,19 @@ ul {
   list-style: none;
   padding: 0;
 }
-.product-list {
-  &::-webkit-scrollbar {
-    background: transparent;
-    width: 10px;
-    padding: 0 4px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: #fafafa;
-    border-radius: 10px;
-    width: 4px;
-    &:hover {
-    }
-  }
-}
+// .product-list {
+//   &::-webkit-scrollbar {
+//     background: transparent;
+//     width: 10px;
+//     padding: 0 4px;
+//   }
+//   &::-webkit-scrollbar-thumb {
+//     background-color: #fafafa;
+//     border-radius: 10px;
+//     width: 4px;
+//     &:hover {
+//     }
+//   }
+// }
 table {
 }

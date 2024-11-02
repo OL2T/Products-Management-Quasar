@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
-import { computed, onMounted, ref, watchEffect } from 'vue'
+import { computed, onMounted, ref, watch, watchEffect } from 'vue'
 import {
   ADD_PRODUCT,
   DELETE_PRODUCT,
+  GET_FILTERED_PRODUCT,
   GET_PRODUCT_BY_ID,
   GET_PRODUCTS,
   GET_TOTAL_PRODUCTS,
@@ -34,46 +35,9 @@ export const useProductStore = defineStore('products', () => {
   const totalItems = ref(0)
   const routes = useRoute()
   const router = useRouter()
-
-  const totalPages = computed(() => {
-    return Math.ceil(totalItems.value / itemsPerPage.value)
-  })
-
-  const filterProducts = computed(() => {
-    return products.value.filter((product) =>
-      product.name.toLowerCase().includes(querySearch.value.toLowerCase())
-    )
-  })
-
-  const detailProduct = computed(() => {
-    return products.value.find((product) => product.id === routes.params.id)
-  })
+  const selectedCategory = ref('')
 
   // Fetch products
-
-  const {
-    result: totalProductsResult,
-    loading: totalLoading,
-    error: totalError,
-    refetch: totalProductRefetch
-  } = useQuery(GET_TOTAL_PRODUCTS, {
-    searchQuery: `%${querySearch.value}%`
-  })
-
-  watchEffect(async () => {
-    isLoading.value = totalLoading.value
-    if (totalProductsResult.value) {
-      totalItems.value =
-        totalProductsResult.value.products_aggregate.aggregate.count
-    }
-
-    console.log('Total Item From GET TOTAL', totalItems.value)
-
-    if (totalError.value) {
-      console.error('Error fetching total products:', totalError.value)
-    }
-  })
-
   const { result, loading, error, fetchMore, refetch } = useQuery(
     GET_PRODUCTS,
     {
@@ -87,17 +51,18 @@ export const useProductStore = defineStore('products', () => {
     isLoading.value = loading.value
     if (result.value) {
       products.value = result.value.products
+      totalItems.value = result.value.products_aggregate.aggregate.count
     }
     if (error.value) {
       console.error('Error fetching products:', error.value)
-      toast('Error fetching products', {
-        theme: 'auto',
-        type: 'error',
-        position: 'top-right'
-      })
-      return
+      // toast('Error fetching products', {
+      //   theme: 'auto',
+      //   type: 'error',
+      //   position: 'top-right'
+      // })
     }
   })
+
   const handleChangeInput = async (e: KeyboardEvent) => {
     const target = e.target as HTMLInputElement
     querySearch.value = target.value
@@ -109,31 +74,27 @@ export const useProductStore = defineStore('products', () => {
   }
 
   const performSearch = async () => {
-    await refetch({
+    const refetchResult = await refetch({
       limit: itemsPerPage.value,
       offset: 0,
       searchQuery: `%${querySearch.value}%`
     })
-
-    // Refetch total items with the current search query
-    const refetchResult = await totalProductRefetch({
-      searchQuery: `%${querySearch.value}%`
-    })
-    if (
-      refetchResult &&
-      refetchResult.data &&
-      refetchResult.data.products_aggregate
-    ) {
-      totalItems.value = refetchResult.data.products_aggregate.aggregate.count
-      console.log('Total Items After Search:', totalItems.value)
+    if (refetchResult?.data && refetchResult.data.products_aggregate) {
+      totalItems.value = refetchResult.data.products_aggregate.aggregate.count // Update total based on filter
+      products.value = refetchResult.data.products
     }
+
     router.replace({
-      query: { ...routes.query, search: querySearch.value }
+      query: {
+        ...routes.query,
+        search: querySearch.value
+      }
     })
   }
 
-  watchEffect(() => {
-    performSearch()
+  watch([querySearch], async () => {
+    currentPage.value = 1 // Reset to page 1 on new filter or search
+    await performSearch()
   })
 
   const searchQuery = routes.query.search as string
@@ -143,6 +104,35 @@ export const useProductStore = defineStore('products', () => {
       performSearch()
     }
   })
+
+  const {
+    result: dataFiltered,
+    refetch: refetchDataFiltered,
+    fetchMore: fetchMoreDataFiltered
+  } = useQuery(GET_FILTERED_PRODUCT, {
+    limit: itemsPerPage.value,
+    offset: (currentPage.value - 1) * itemsPerPage.value,
+    category: selectedCategory.value
+  })
+
+  watchEffect(async () => {
+    if (dataFiltered.value) {
+      products.value = dataFiltered.value.products
+      totalItems.value = dataFiltered.value.products_aggregate.aggregate.count
+    }
+  })
+
+  const handleCategorySelect = async (category: string) => {
+    selectedCategory.value = category
+    currentPage.value = 1
+    await refetchDataFiltered({
+      limit: itemsPerPage.value,
+      offset: 0,
+      category: selectedCategory.value
+    })
+    console.log(totalItems.value)
+    console.log(products.value)
+  }
 
   const changePage = (page: number) => {
     if (page < 1 || page > totalPages.value) return
@@ -160,7 +150,40 @@ export const useProductStore = defineStore('products', () => {
         }
       }
     })
+    fetchMoreDataFiltered({
+      variables: { offset: newOffset, limit: itemsPerPage.value },
+      updateQuery: (previousResult, { fetchMoreResult }) => {
+        if (!fetchMoreResult) return previousResult
+        return {
+          ...previousResult,
+          products: fetchMoreResult.products // Cập nhật các sản phẩm mới cho trang hiện tại
+        }
+      }
+    })
   }
+
+  onMounted(() => {
+    // Initialize search and category filter based on URL parameters
+    if (routes.query.search) querySearch.value = routes.query.search as string
+    if (routes.query.category)
+      selectedCategory.value = routes.query.category as string
+    performSearch()
+  })
+
+  const totalPages = computed(() => {
+    return Math.ceil(totalItems.value / itemsPerPage.value)
+  })
+
+  const filterProducts = computed(() => {
+    return products.value.filter(
+      (product) =>
+        !selectedCategory.value || product.category === selectedCategory.value
+    )
+  })
+
+  const detailProduct = computed(() => {
+    return products.value.find((product) => product.id === routes.params.id)
+  })
 
   const fetchProductById = (id: string) => {
     const { result, loading, error } = useQuery(GET_PRODUCT_BY_ID, { id })
@@ -196,9 +219,8 @@ export const useProductStore = defineStore('products', () => {
       if (response?.data?.insert_products?.returning?.length) {
         const addedProduct = response.data.insert_products.returning[0]
         products.value = [...products.value, addedProduct]
-
+        await refetch()
         totalItems.value += 1
-        await totalProductRefetch()
 
         if (products.value.length > itemsPerPage.value) {
           changePage(currentPage.value + 1)
@@ -236,8 +258,7 @@ export const useProductStore = defineStore('products', () => {
 
       if (response?.data?.delete_products?.affected_rows) {
         products.value = products.value.filter((product) => product.id !== id)
-        await totalProductRefetch()
-
+        await refetch()
         totalItems.value -= 1
         console.log('handleDelete: ', totalItems.value)
 
@@ -328,6 +349,7 @@ export const useProductStore = defineStore('products', () => {
     fetchProductById,
     handleUpdateProduct,
     changePage,
+    handleCategorySelect,
     searchQuery
   }
 })
