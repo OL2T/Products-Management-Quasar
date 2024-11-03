@@ -10,6 +10,20 @@ export default defineComponent({
   name: 'Create Products',
   setup() {
     const store = useProductStore()
+    const categories = ref([
+      'Electronics',
+      'Computers',
+      'Tablets',
+      'Wearables',
+      'Cameras',
+      'Gaming',
+      'Drones',
+      'Smart Home',
+      'Home Appliances',
+      'Storage',
+      'Accessories',
+      'Beauty'
+    ])
     const formCreate = reactive({
       name: '',
       description: '',
@@ -59,13 +73,23 @@ export default defineComponent({
           <InputForm
             name="Category"
             id="category"
-            placeholder="Enter category"
+            as="select"
+            placeholder="Select category"
             v-model={formCreate.category}
             error={v$.value.category.$error}
             errorMessage={v$.value.category.$errors.map(
               (error) => error.$message
             )}
-          />
+          >
+            <option value="" disabled>
+              {/* Select category */}
+            </option>
+            {categories.value.map((category) => (
+              <option value={category} key={category}>
+                {category}
+              </option>
+            ))}
+          </InputForm>
           <InputForm
             name="Description"
             id="description"

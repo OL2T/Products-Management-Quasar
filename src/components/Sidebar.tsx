@@ -1,10 +1,17 @@
 // Sidebar
-import { defineComponent } from 'vue'
+import { defineComponent, Prop, PropType } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useAuthStore } from '../store/authStore'
 
 export default defineComponent({
-  setup() {
+  name: 'Sidebar',
+  props: {
+    isOpen: {
+      type: Boolean as PropType<boolean>,
+      default: false
+    }
+  },
+  setup(props) {
     const route = useRoute()
     const authStore = useAuthStore()
 
@@ -15,7 +22,10 @@ export default defineComponent({
     return () => (
       <aside
         id="default-sidebar"
-        class="fixed top-0 left-0 z-40 w-64 h-screen bg-gray-50 dark:bg-gray-800 dark:text-white min-w-[280px] transition-transform -translate-x-full sm:translate-x-0"
+        class={[
+          'fixed top-0 left-0 z-40 w-64 h-screen bg-gray-50 dark:bg-gray-800 dark:text-gray-400 transition-transform transform duration-300',
+          props.isOpen ? 'translate-x-0' : '-translate-x-full'
+        ]}
         aria-label="Sidebar"
       >
         <div class="p-4">

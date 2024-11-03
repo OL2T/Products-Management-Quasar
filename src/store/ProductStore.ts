@@ -37,6 +37,26 @@ export const useProductStore = defineStore('products', () => {
   const router = useRouter()
   const selectedCategory = ref('')
 
+  const {
+    result: dataFiltered,
+    error: errorFiltered,
+    refetch: refetchDataFiltered,
+    fetchMore: fetchMoreDataFiltered
+  } = useQuery(GET_FILTERED_PRODUCT, {
+    limit: itemsPerPage.value,
+    offset: (currentPage.value - 1) * itemsPerPage.value,
+    category: selectedCategory.value
+  })
+
+  watchEffect(async () => {
+    if (dataFiltered.value) {
+      products.value = dataFiltered.value.products
+      totalItems.value = dataFiltered.value.products_aggregate.aggregate.count
+    }
+    if (errorFiltered.value) {
+      console.error('Error fetching filtered products:', errorFiltered.value)
+    }
+  })
   // Fetch products
   const { result, loading, error, fetchMore, refetch } = useQuery(
     GET_PRODUCTS,
@@ -84,10 +104,24 @@ export const useProductStore = defineStore('products', () => {
       products.value = refetchResult.data.products
     }
 
+    if (selectedCategory.value) {
+      products.value = products.value.filter(
+        (product) => product.category === selectedCategory.value
+      )
+      // await refetchDataFiltered({
+      //   limit: itemsPerPage.value,
+      //   offset: 0,
+      //   category: selectedCategory.value
+      // })
+      // products.value = dataFiltered.value.products
+      totalItems.value = products.value.length // Cập nhật tổng số sản phẩm sau khi lọc
+    }
+
     router.replace({
       query: {
         ...routes.query,
-        search: querySearch.value
+        search: querySearch.value,
+        category: selectedCategory.value
       }
     })
   }
@@ -95,6 +129,7 @@ export const useProductStore = defineStore('products', () => {
   watch([querySearch], async () => {
     currentPage.value = 1 // Reset to page 1 on new filter or search
     await performSearch()
+    // console.log('Watch query search', products.value)
   })
 
   const searchQuery = routes.query.search as string
@@ -105,26 +140,11 @@ export const useProductStore = defineStore('products', () => {
     }
   })
 
-  const {
-    result: dataFiltered,
-    refetch: refetchDataFiltered,
-    fetchMore: fetchMoreDataFiltered
-  } = useQuery(GET_FILTERED_PRODUCT, {
-    limit: itemsPerPage.value,
-    offset: (currentPage.value - 1) * itemsPerPage.value,
-    category: selectedCategory.value
-  })
-
-  watchEffect(async () => {
-    if (dataFiltered.value) {
-      products.value = dataFiltered.value.products
-      totalItems.value = dataFiltered.value.products_aggregate.aggregate.count
-    }
-  })
-
   const handleCategorySelect = async (category: string) => {
     selectedCategory.value = category
     currentPage.value = 1
+    // await performSearch()
+
     await refetchDataFiltered({
       limit: itemsPerPage.value,
       offset: 0,
@@ -132,6 +152,18 @@ export const useProductStore = defineStore('products', () => {
     })
     console.log(totalItems.value)
     console.log(products.value)
+
+    if (selectedCategory.value === '') {
+      await refetch()
+    }
+
+    router.replace({
+      query: {
+        ...routes.query,
+        search: querySearch.value,
+        category: selectedCategory.value
+      }
+    })
   }
 
   const changePage = (page: number) => {
@@ -140,45 +172,49 @@ export const useProductStore = defineStore('products', () => {
     currentPage.value = page
     const newOffset = (currentPage.value - 1) * itemsPerPage.value
 
-    fetchMore({
-      variables: { offset: newOffset, limit: itemsPerPage.value },
-      updateQuery: (previousResult, { fetchMoreResult }) => {
-        if (!fetchMoreResult) return previousResult
-        return {
-          ...previousResult,
-          products: fetchMoreResult.products // Cập nhật các sản phẩm mới cho trang hiện tại
+    if (selectedCategory.value) {
+      // Khi filter theo category
+      fetchMoreDataFiltered({
+        variables: { offset: newOffset, limit: itemsPerPage.value },
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          if (!fetchMoreResult) return previousResult
+          return {
+            ...previousResult,
+            products: fetchMoreResult.products
+          }
         }
-      }
-    })
-    fetchMoreDataFiltered({
-      variables: { offset: newOffset, limit: itemsPerPage.value },
-      updateQuery: (previousResult, { fetchMoreResult }) => {
-        if (!fetchMoreResult) return previousResult
-        return {
-          ...previousResult,
-          products: fetchMoreResult.products // Cập nhật các sản phẩm mới cho trang hiện tại
+      })
+    } else {
+      // Khi không filter
+      fetchMore({
+        variables: { offset: newOffset, limit: itemsPerPage.value },
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          if (!fetchMoreResult) return previousResult
+          return {
+            ...previousResult,
+            products: fetchMoreResult.products
+          }
         }
-      }
-    })
+      })
+    }
   }
 
   onMounted(() => {
-    // Initialize search and category filter based on URL parameters
     if (routes.query.search) querySearch.value = routes.query.search as string
-    if (routes.query.category)
+    if (routes.query.category) {
       selectedCategory.value = routes.query.category as string
-    performSearch()
+      refetchDataFiltered({
+        limit: itemsPerPage.value,
+        offset: 0,
+        category: selectedCategory.value
+      })
+    } else {
+      performSearch()
+    }
   })
 
   const totalPages = computed(() => {
     return Math.ceil(totalItems.value / itemsPerPage.value)
-  })
-
-  const filterProducts = computed(() => {
-    return products.value.filter(
-      (product) =>
-        !selectedCategory.value || product.category === selectedCategory.value
-    )
   })
 
   const detailProduct = computed(() => {
@@ -330,13 +366,9 @@ export const useProductStore = defineStore('products', () => {
   }
 
   return {
-    result,
-    loading,
-    error,
     product,
     products,
     isLoading,
-    filterProducts,
     isShowCreateModal,
     detailProduct,
     isPopoverConfirmOpen,
@@ -350,6 +382,8 @@ export const useProductStore = defineStore('products', () => {
     handleUpdateProduct,
     changePage,
     handleCategorySelect,
-    searchQuery
+    searchQuery,
+    selectedCategory,
+    refetch
   }
 })

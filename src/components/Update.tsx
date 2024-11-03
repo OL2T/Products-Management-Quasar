@@ -1,4 +1,4 @@
-import { computed, defineComponent, onMounted, reactive, watch } from 'vue'
+import { computed, defineComponent, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProductStore } from '../store/ProductStore'
 import useVueValidate from '@vuelidate/core'
@@ -11,7 +11,20 @@ export default defineComponent({
     const store = useProductStore()
     const route = useRoute()
     const router = useRouter()
-
+    const categories = ref([
+      'Electronics',
+      'Computers',
+      'Tablets',
+      'Wearables',
+      'Cameras',
+      'Gaming',
+      'Drones',
+      'Smart Home',
+      'Home Appliances',
+      'Storage',
+      'Accessories',
+      'Beauty'
+    ])
     const formEdit = reactive({
       name: route.params.id ? store.product?.name ?? '' : '',
       description: route.params.id ? store.product?.description ?? '' : '',
@@ -92,13 +105,23 @@ export default defineComponent({
           <InputForm
             name="Category"
             id="category"
-            placeholder="Enter category"
+            as="select"
+            placeholder="Select category"
             v-model={formEdit.category}
             error={v$.value.category.$error}
             errorMessage={v$.value.category.$errors.map(
               (error) => error.$message
             )}
-          />
+          >
+            <option value="" disabled>
+              {/* Select category */}
+            </option>
+            {categories.value.map((category) => (
+              <option value={category} key={category}>
+                {category}
+              </option>
+            ))}
+          </InputForm>
           <InputForm
             name="Description"
             id="description"

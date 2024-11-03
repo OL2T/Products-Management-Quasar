@@ -154,7 +154,7 @@ export default defineComponent({
                 <TableSkeleton />
               ) : (
                 <tbody>
-                  {store.filterProducts.map((product: any, index: number) => {
+                  {store.products.map((product: any, index: number) => {
                     const displayIndex =
                       (store.currentPage - 1) * store.itemsPerPage + index + 1
                     return (
@@ -211,9 +211,9 @@ export default defineComponent({
                           </button>
 
                           {activePopoverId === product.id && (
-                            <div class="absolute bg-blue-100 dark:bg-gray-700 min-w-[max-content] top-[55px] right-4 z-50 py-2 px-1 rounded-sm flex flex-col shadow-lg">
+                            <div class="absolute bg-gray-100 dark:bg-gray-700 min-w-[max-content] top-[55px] right-4 z-50 py-2 px-1 rounded-sm flex flex-col shadow-lg">
                               <div className="absolute top-0 right-[10px] border-x-transparent border-t-transparent border-b-[10px]">
-                                <div class="w-0 h-0 absolute right-0 -translate-y-full border-x-transparent border-x-[11px] border-t-transparent border-t-[9px] border-b-[9px] border-b-blue-100 dark:border-b-gray-700"></div>
+                                <div class="w-0 h-0 absolute right-0 -translate-y-full border-x-transparent border-x-[11px] border-t-transparent border-t-[9px] border-b-[9px] border-b-gray-100 dark:border-b-gray-700"></div>
                               </div>
                               <button
                                 onClick={(event: Event) => {

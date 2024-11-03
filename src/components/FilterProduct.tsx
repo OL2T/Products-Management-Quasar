@@ -24,7 +24,7 @@ export default defineComponent({
     const floating = ref(null)
     const isShow = ref(false)
     const selectedCategoryTitle = ref('All Products')
-    const { handleCategorySelect } = useProductStore()
+    const store = useProductStore()
 
     const { floatingStyles, placement, x, y, middlewareData, strategy } =
       useFloating(reference, floating, {
@@ -40,7 +40,7 @@ export default defineComponent({
     const handleCategoryClick = (category: string) => {
       if (category) {
         selectedCategoryTitle.value = category || ''
-        handleCategorySelect(category === 'All Products' ? '' : category)
+        store.handleCategorySelect(category === 'All Products' ? '' : category)
         isShow.value = false
       }
     }
@@ -56,22 +56,40 @@ export default defineComponent({
             v-model={selectedCategoryTitle.value}
           >
             <span class="sr-only"></span>
-            {selectedCategoryTitle.value}
-            <svg
-              class="w-2.5 h-2.5 ms-2.5"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 10 6"
-            >
-              <path
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="m1 1 4 4 4-4"
-              />
-            </svg>
+            {store.selectedCategory || 'All Products'}
+            {isShow.value ? (
+              <svg
+                class="w-2.5 h-2.5 ms-2.5  transform rotate-180 transition-transform duration-300"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 10 6"
+              >
+                <path
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="m1 1 4 4 4-4"
+                />
+              </svg>
+            ) : (
+              <svg
+                class="w-2.5 h-2.5 ms-2.5 transition-transform duration-300"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 10 6"
+              >
+                <path
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="m1 1 4 4 4-4"
+                />
+              </svg>
+            )}
           </button>
           {isShow.value && (
             <div
@@ -80,40 +98,16 @@ export default defineComponent({
               class="z-10 bg-[#fff] divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600"
             >
               <ul
-                class="py-1 text-sm text-gray-700 dark:text-gray-200"
+                class="py-2 px-2 text-sm text-gray-700 dark:text-gray-200"
                 aria-labelledby="dropdownActionButton"
               >
-                {/* <li>
-                  <a
-                    href="#"
-                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                  >
-                    Reward
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                  >
-                    Promote
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                  >
-                    Activate account
-                  </a>
-                </li> */}
                 {dataCategory.value.map((item) => {
                   return (
                     <li>
                       <button
                         onclick={() => handleCategoryClick(item)}
                         type="button"
-                        class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                        class="block w-full text-left px-4 py-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
                       >
                         {item}
                       </button>

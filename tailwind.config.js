@@ -9,6 +9,7 @@ module.exports = {
       addVariant('child', '& > *')
       addVariant('child-hover', '& > *:hover')
     }
-  ]
+  ],
   // prefix: 'tw-'
+  darkMode: 'class'
 }
