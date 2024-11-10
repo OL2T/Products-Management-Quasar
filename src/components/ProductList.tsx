@@ -43,6 +43,11 @@ export default defineComponent({
       return Math.ceil(store.totalItems / store.itemsPerPage)
     })
 
+    const handleCategoryClick = (category: string) => {
+      if (category) {
+        store.handleCategorySelect(category === 'All Products' ? '' : category)
+      }
+    }
     return {
       store,
       activePopoverId,
@@ -51,7 +56,8 @@ export default defineComponent({
       handleShowPopover,
       handleDeleteProduct,
       handleShowConfirmPopover,
-      handlePageChange
+      handlePageChange,
+      handleCategoryClick
     }
   },
 
@@ -64,7 +70,8 @@ export default defineComponent({
       handleShowPopover,
       handleShowConfirmPopover,
       handleDeleteProduct,
-      handlePageChange
+      handlePageChange,
+      handleCategoryClick
     } = this
 
     return (
@@ -77,7 +84,7 @@ export default defineComponent({
             onInput={(e: any) => store.handleChangeInput(e)}
             v-model={store.searchQuery}
           />
-          <FilterProduct />
+          <FilterProduct onCategorySelect={handleCategoryClick} />
           <div class="flex justify-end">
             <button
               onClick={() => (store.isShowCreateModal = true)}

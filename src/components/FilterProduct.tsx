@@ -4,7 +4,8 @@ import { useProductStore } from '../store/ProductStore'
 
 export default defineComponent({
   name: 'FilterProduct',
-  setup() {
+  emits: ['categorySelect'],
+  setup(_, { emit }) {
     const dataCategory = ref([
       'All Products',
       'Electronics',
@@ -40,7 +41,7 @@ export default defineComponent({
     const handleCategoryClick = (category: string) => {
       if (category) {
         selectedCategoryTitle.value = category || ''
-        store.handleCategorySelect(category === 'All Products' ? '' : category)
+        emit('categorySelect', category)
         isShow.value = false
       }
     }

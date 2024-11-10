@@ -11,13 +11,13 @@ export default defineComponent({
     const router = useRouter()
     onMounted(() => {
       const productId = route.params.id
-      console.log(productId)
+
       store.fetchProductById(
         Array.isArray(productId) ? productId[0] : productId
       )
     })
 
-    console.log(route.params.id)
+
     return () => (
       <div>
         {store.isLoading ? (

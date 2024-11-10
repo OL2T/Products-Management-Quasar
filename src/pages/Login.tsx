@@ -25,7 +25,7 @@ export default defineComponent({
 
       const result = await v$.value.$validate()
       if (result) {
-        // console.log(formLogin)
+
         authStore.login(formLogin.email, formLogin.password)
 
         v$.value.$reset()

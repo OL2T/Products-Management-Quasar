@@ -1,5 +1,4 @@
 import { defineComponent, ref } from 'vue'
-import ChildComponent from '../components/ChildComponent'
 
 export default defineComponent({
   name: 'Dashboard - Parent Component',

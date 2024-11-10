@@ -33,7 +33,6 @@ export default defineComponent({
 
       const result = await v$.value.$validate()
       if (result) {
-        console.log(formRegister)
         authStore.register(
           formRegister.email,
           formRegister.password,

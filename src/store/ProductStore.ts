@@ -48,15 +48,6 @@ export const useProductStore = defineStore('products', () => {
     category: selectedCategory.value
   })
 
-  watchEffect(async () => {
-    if (dataFiltered.value) {
-      products.value = dataFiltered.value.products
-      totalItems.value = dataFiltered.value.products_aggregate.aggregate.count
-    }
-    if (errorFiltered.value) {
-      console.error('Error fetching filtered products:', errorFiltered.value)
-    }
-  })
   // Fetch products
   const { result, loading, error, fetchMore, refetch } = useQuery(
     GET_PRODUCTS,
@@ -73,13 +64,13 @@ export const useProductStore = defineStore('products', () => {
       products.value = result.value.products
       totalItems.value = result.value.products_aggregate.aggregate.count
     }
-    if (error.value) {
+    if (dataFiltered.value && dataFiltered.value.products.length > 0) {
+      products.value = dataFiltered.value.products
+      totalItems.value = dataFiltered.value.products_aggregate.aggregate.count
+    }
+
+    if (error.value || errorFiltered.value) {
       console.error('Error fetching products:', error.value)
-      // toast('Error fetching products', {
-      //   theme: 'auto',
-      //   type: 'error',
-      //   position: 'top-right'
-      // })
     }
   })
 
@@ -129,10 +120,10 @@ export const useProductStore = defineStore('products', () => {
   watch([querySearch], async () => {
     currentPage.value = 1 // Reset to page 1 on new filter or search
     await performSearch()
-    // console.log('Watch query search', products.value)
   })
 
   const searchQuery = routes.query.search as string
+
   onMounted(() => {
     if (searchQuery) {
       querySearch.value = searchQuery
@@ -143,15 +134,17 @@ export const useProductStore = defineStore('products', () => {
   const handleCategorySelect = async (category: string) => {
     selectedCategory.value = category
     currentPage.value = 1
-    // await performSearch()
 
-    await refetchDataFiltered({
+    const refetchResult = await refetchDataFiltered({
       limit: itemsPerPage.value,
       offset: 0,
       category: selectedCategory.value
     })
-    console.log(totalItems.value)
-    console.log(products.value)
+
+    if (refetchResult?.data?.products) {
+      products.value = refetchResult.data.products
+      totalItems.value = refetchResult.data.products_aggregate.aggregate.count
+    }
 
     if (selectedCategory.value === '') {
       await refetch()
@@ -173,28 +166,16 @@ export const useProductStore = defineStore('products', () => {
     const newOffset = (currentPage.value - 1) * itemsPerPage.value
 
     if (selectedCategory.value) {
-      // Khi filter theo category
-      fetchMoreDataFiltered({
-        variables: { offset: newOffset, limit: itemsPerPage.value },
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return previousResult
-          return {
-            ...previousResult,
-            products: fetchMoreResult.products
-          }
-        }
+      refetchDataFiltered({
+        limit: itemsPerPage.value,
+        offset: newOffset,
+        category: selectedCategory.value
       })
     } else {
-      // Khi không filter
-      fetchMore({
-        variables: { offset: newOffset, limit: itemsPerPage.value },
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return previousResult
-          return {
-            ...previousResult,
-            products: fetchMoreResult.products
-          }
-        }
+      refetch({
+        limit: itemsPerPage.value,
+        offset: newOffset,
+        searchQuery: `%${querySearch.value}%`
       })
     }
   }
@@ -289,14 +270,10 @@ export const useProductStore = defineStore('products', () => {
     try {
       const response = await mutate({ id })
 
-      // console.log
-      console.log('Delete product mutation response:', response)
-
       if (response?.data?.delete_products?.affected_rows) {
         products.value = products.value.filter((product) => product.id !== id)
         await refetch()
         totalItems.value -= 1
-        console.log('handleDelete: ', totalItems.value)
 
         if (products.value.length === 0 && currentPage.value > 1) {
           changePage(currentPage.value - 1)
@@ -335,10 +312,8 @@ export const useProductStore = defineStore('products', () => {
       if (response?.data?.update_products?.affected_rows) {
         const updated = response.data.update_products.returning[0]
         const index = products.value.findIndex((p) => p.id === updated.id)
-        // console.log('Updated product:', updated)
-        // console.log(index)
+
         if (index !== -1) {
-          console.log(products.value[index])
           products.value = [
             ...products.value.slice(0, index),
             updated,
@@ -366,6 +341,7 @@ export const useProductStore = defineStore('products', () => {
   }
 
   return {
+    result,
     product,
     products,
     isLoading,
@@ -384,6 +360,8 @@ export const useProductStore = defineStore('products', () => {
     handleCategorySelect,
     searchQuery,
     selectedCategory,
-    refetch
+    refetch,
+    refetchDataFiltered,
+    dataFiltered
   }
 })

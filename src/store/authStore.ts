@@ -45,12 +45,11 @@ export const useAuthStore = defineStore('auth', () => {
         username: username
       }
 
-      user.value = newUser
       await updateProfile(userCredential.user, { displayName: username })
-      console.log('newUser', newUser)
 
-      const admin_secret = 'myadminsecretkey'
-      const url = 'http://localhost:8080/v1/graphql'
+      const admin_secret =
+        'I8wO1z13VIm7mTfTU5cwgjbhipveo4Dn4l320oVx7zzgFdanauc4g2bYn5qRw8nF'
+      const url = 'https://neutral-rooster-35.hasura.app/v1/graphql'
       const query = `mutation($userId: String!, $userEmail: String, $username: String) {
         insert_users(objects: [{
           id: $userId, username: $username, email: $userEmail, last_seen: "now()"
@@ -77,11 +76,14 @@ export const useAuthStore = defineStore('auth', () => {
           variables: variables
         })
       })
-
+      await signOut(auth)
       toast('User registered successfully', {
         theme: 'auto',
         type: 'success',
-        position: 'top-right'
+        position: 'top-right',
+        onClose: () => {
+          router.push({ path: '/login' })
+        }
       })
     } catch (err: any) {
       error.value = err.message
@@ -112,21 +114,14 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       user.value = newUser
-      console.log(newUser)
+
       const accessToken = await userCredential.user.getIdToken()
 
       // Lưu accessToken vào localStorage
       localStorage.setItem('accessToken', accessToken)
       localStorage.setItem('user', JSON.stringify(newUser))
 
-      toast('User logged in successfully', {
-        theme: 'auto',
-        type: 'success',
-        position: 'top-right',
-        onClose: () => {
-          router.push({ path: '/products' })
-        }
-      })
+      router.push({ path: '/products' })
     } catch (err: any) {
       error.value = err.message
       const errorNotFound =

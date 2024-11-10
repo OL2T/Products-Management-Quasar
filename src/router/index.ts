@@ -29,7 +29,7 @@ export default route<any>(function (/* { store, ssrContext } */) {
 
   Router.beforeEach((to, from, next) => {
     const isLoggedIn = localStorage.getItem('accessToken') !== null // Kiểm tra xem người dùng đã đăng nhập chưa
-    // console.log('isLoggedIn', isLoggedIn)
+
     // Nếu người dùng chưa đăng nhập và đang cố gắng vào trang yêu cầu đăng nhập
     if (!isLoggedIn && to.path !== '/login' && to.path !== '/register') {
       next('/login') // Chuyển hướng người dùng về trang login
