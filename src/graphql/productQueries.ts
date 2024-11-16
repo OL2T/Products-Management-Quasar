@@ -138,7 +138,18 @@ const UPDATE_PRODUCT = gql`
     }
   }
 `
-
+const GET_ALL_PRODUCTS = gql`
+  query GetAllProducts {
+    products {
+      id
+      name
+      description
+      category
+      stock
+      price
+    }
+  }
+`
 export {
   GET_PRODUCTS,
   ADD_PRODUCT,
@@ -146,5 +157,6 @@ export {
   GET_PRODUCT_BY_ID,
   UPDATE_PRODUCT,
   GET_TOTAL_PRODUCTS,
-  GET_FILTERED_PRODUCT
+  GET_FILTERED_PRODUCT,
+  GET_ALL_PRODUCTS
 }
