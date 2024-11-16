@@ -36,12 +36,12 @@ export const useProductStore = defineStore('products', () => {
   const routes = useRoute()
   const router = useRouter()
   const selectedCategory = ref('')
+  const categories = ref<string[]>([])
 
   const {
     result: dataFiltered,
     error: errorFiltered,
-    refetch: refetchDataFiltered,
-    fetchMore: fetchMoreDataFiltered
+    refetch: refetchDataFiltered
   } = useQuery(GET_FILTERED_PRODUCT, {
     limit: itemsPerPage.value,
     offset: (currentPage.value - 1) * itemsPerPage.value,
@@ -49,14 +49,11 @@ export const useProductStore = defineStore('products', () => {
   })
 
   // Fetch products
-  const { result, loading, error, fetchMore, refetch } = useQuery(
-    GET_PRODUCTS,
-    {
-      limit: itemsPerPage.value,
-      offset: (currentPage.value - 1) * itemsPerPage.value,
-      searchQuery: `%${querySearch.value}%`
-    }
-  )
+  const { result, loading, error, refetch } = useQuery(GET_PRODUCTS, {
+    limit: itemsPerPage.value,
+    offset: (currentPage.value - 1) * itemsPerPage.value,
+    searchQuery: `%${querySearch.value}%`
+  })
 
   watchEffect(async () => {
     isLoading.value = loading.value
@@ -73,6 +70,9 @@ export const useProductStore = defineStore('products', () => {
       console.error('Error fetching products:', error.value)
     }
   })
+
+  categories.value = products.value.map((product) => product.category)
+  console.log(categories.value)
 
   const handleChangeInput = async (e: KeyboardEvent) => {
     const target = e.target as HTMLInputElement
@@ -99,12 +99,7 @@ export const useProductStore = defineStore('products', () => {
       products.value = products.value.filter(
         (product) => product.category === selectedCategory.value
       )
-      // await refetchDataFiltered({
-      //   limit: itemsPerPage.value,
-      //   offset: 0,
-      //   category: selectedCategory.value
-      // })
-      // products.value = dataFiltered.value.products
+
       totalItems.value = products.value.length // Cập nhật tổng số sản phẩm sau khi lọc
     }
 
@@ -362,6 +357,7 @@ export const useProductStore = defineStore('products', () => {
     selectedCategory,
     refetch,
     refetchDataFiltered,
-    dataFiltered
+    dataFiltered,
+    categories
   }
 })
