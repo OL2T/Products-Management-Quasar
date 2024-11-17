@@ -1,11 +1,17 @@
 import gql from 'graphql-tag'
 
 const GET_PRODUCTS = gql`
-  query GetProducts($limit: Int, $offset: Int, $searchQuery: String) {
+  query GetProducts(
+    $limit: Int
+    $offset: Int
+    $searchQuery: String
+    $orderBy: order_by
+  ) {
     products(
       where: { name: { _ilike: $searchQuery } }
       limit: $limit
       offset: $offset
+      order_by: { price: $orderBy }
     ) {
       id
       name
@@ -22,11 +28,17 @@ const GET_PRODUCTS = gql`
   }
 `
 const GET_FILTERED_PRODUCT = gql`
-  query GetFilteredProducts($limit: Int, $offset: Int, $category: String) {
+  query GetFilteredProducts(
+    $limit: Int
+    $offset: Int
+    $category: String
+    $orderBy: order_by
+  ) {
     products(
       where: { category: { _eq: $category } }
       limit: $limit
       offset: $offset
+      order_by: { price: $orderBy }
     ) {
       id
       name

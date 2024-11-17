@@ -37,6 +37,7 @@ export const useProductStore = defineStore('products', () => {
   const router = useRouter()
   const selectedCategory = ref('')
   const categories = ref<string[]>([])
+  const sortOrder = ref<'asc' | 'desc'>('asc')
 
   const {
     result: dataFiltered,
@@ -45,14 +46,16 @@ export const useProductStore = defineStore('products', () => {
   } = useQuery(GET_FILTERED_PRODUCT, {
     limit: itemsPerPage.value,
     offset: (currentPage.value - 1) * itemsPerPage.value,
-    category: selectedCategory.value
+    category: selectedCategory.value,
+    orderBy: sortOrder.value
   })
 
   // Fetch products
   const { result, loading, error, refetch } = useQuery(GET_PRODUCTS, {
     limit: itemsPerPage.value,
     offset: (currentPage.value - 1) * itemsPerPage.value,
-    searchQuery: `%${querySearch.value}%`
+    searchQuery: `%${querySearch.value}%`,
+    orderBy: sortOrder.value
   })
 
   watchEffect(async () => {
@@ -87,7 +90,8 @@ export const useProductStore = defineStore('products', () => {
     const refetchResult = await refetch({
       limit: itemsPerPage.value,
       offset: 0,
-      searchQuery: `%${querySearch.value}%`
+      searchQuery: `%${querySearch.value}%`,
+      orderBy: sortOrder.value
     })
     if (refetchResult?.data && refetchResult.data.products_aggregate) {
       totalItems.value = refetchResult.data.products_aggregate.aggregate.count // Update total based on filter
@@ -132,7 +136,8 @@ export const useProductStore = defineStore('products', () => {
     const refetchResult = await refetchDataFiltered({
       limit: itemsPerPage.value,
       offset: 0,
-      category: selectedCategory.value
+      category: selectedCategory.value,
+      orderBy: sortOrder.value
     })
 
     if (refetchResult?.data?.products) {
@@ -163,13 +168,15 @@ export const useProductStore = defineStore('products', () => {
       refetchDataFiltered({
         limit: itemsPerPage.value,
         offset: newOffset,
-        category: selectedCategory.value
+        category: selectedCategory.value,
+        orderBy: sortOrder.value
       })
     } else {
       refetch({
         limit: itemsPerPage.value,
         offset: newOffset,
-        searchQuery: `%${querySearch.value}%`
+        searchQuery: `%${querySearch.value}%`,
+        orderBy: sortOrder.value
       })
     }
   }
@@ -181,7 +188,8 @@ export const useProductStore = defineStore('products', () => {
       refetchDataFiltered({
         limit: itemsPerPage.value,
         offset: 0,
-        category: selectedCategory.value
+        category: selectedCategory.value,
+        orderBy: sortOrder.value
       })
     } else {
       performSearch()
@@ -212,6 +220,16 @@ export const useProductStore = defineStore('products', () => {
           position: 'top-right'
         })
       }
+    })
+  }
+
+  const sortProductsByPrice = async () => {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+    await refetch({
+      limit: itemsPerPage.value,
+      offset: (currentPage.value - 1) * itemsPerPage.value,
+      searchQuery: `%${querySearch.value}%`,
+      orderBy: sortOrder.value
     })
   }
 
@@ -345,6 +363,11 @@ export const useProductStore = defineStore('products', () => {
     currentPage,
     totalItems,
     itemsPerPage,
+    searchQuery,
+    selectedCategory,
+    dataFiltered,
+    categories,
+    sortOrder,
     handleChangeInput,
     handleAddProduct,
     handleDeleteProduct,
@@ -352,11 +375,8 @@ export const useProductStore = defineStore('products', () => {
     handleUpdateProduct,
     changePage,
     handleCategorySelect,
-    searchQuery,
-    selectedCategory,
     refetch,
     refetchDataFiltered,
-    dataFiltered,
-    categories
+    sortProductsByPrice
   }
 })

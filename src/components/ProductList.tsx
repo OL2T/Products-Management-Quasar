@@ -147,8 +147,52 @@ export default defineComponent({
                   <th scope="col" class="px-6 py-3">
                     Category
                   </th>
-                  <th scope="col" class="px-6 py-3">
-                    Price
+                  <th scope="col" class=" px-6 py-3">
+                    <button
+                      onClick={() => store.sortProductsByPrice()}
+                      class="flex items-center gap-x-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
+                    >
+                      <span class="text-gray-700 dark:text-gray-400 uppercase">
+                        Price
+                      </span>
+                      {store.sortOrder === 'asc' ? (
+                        <svg
+                          class="w-4 h-4 text-gray-700 dark:text-white"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke="currentColor"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 6v13m0-13 4 4m-4-4-4 4"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          class="w-4 h-4 text-gray-700 dark:text-white"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke="currentColor"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 19V5m0 14-4-4m4 4 4-4"
+                          />
+                        </svg>
+                      )}
+                    </button>
                   </th>
                   <th scope="col" class="px-6 py-3">
                     Stock
