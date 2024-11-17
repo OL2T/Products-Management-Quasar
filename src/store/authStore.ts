@@ -18,6 +18,8 @@ interface User {
   id: string
   username: string | null
   email: string | null
+  first_name: string
+  last_name: string
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -110,7 +112,9 @@ export const useAuthStore = defineStore('auth', () => {
       const newUser = {
         id: userCredential.user.uid,
         email: userCredential.user.email,
-        username: userCredential.user.displayName
+        username: userCredential.user.displayName,
+        first_name: '',
+        last_name: ''
       }
 
       user.value = newUser

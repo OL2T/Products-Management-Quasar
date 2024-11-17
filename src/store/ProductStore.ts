@@ -72,7 +72,6 @@ export const useProductStore = defineStore('products', () => {
   })
 
   categories.value = products.value.map((product) => product.category)
-  console.log(categories.value)
 
   const handleChangeInput = async (e: KeyboardEvent) => {
     const target = e.target as HTMLInputElement

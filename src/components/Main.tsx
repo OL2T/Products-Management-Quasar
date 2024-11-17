@@ -2,6 +2,7 @@ import {
   defineComponent,
   onMounted,
   PropType,
+  reactive,
   ref,
   Transition,
   watch
@@ -9,6 +10,7 @@ import {
 import { useAuthStore } from '../store/authStore'
 import { arrow, flip, offset, shift, useFloating } from '@floating-ui/vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { useUserStore } from '../store/userStore'
 export default defineComponent({
   name: 'Main Component',
   props: {
@@ -22,13 +24,43 @@ export default defineComponent({
     }
   },
   setup() {
-    const isShow = ref(false)
     const authStore = useAuthStore()
+    const userStore = useUserStore()
+    const isShow = ref(false)
     const reference = ref(null)
     const floating = ref(null)
     const floatingArrow = ref(null)
 
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    const uid = localStorage.getItem('user')
+    const userId = uid ? JSON.parse(uid).id : null
+
+    const formUser = reactive({
+      first_name: userStore.user?.first_name || '',
+      last_name: userStore.user?.last_name || '',
+      username: userStore.user?.username || '',
+      email: userStore.user?.email || ''
+    })
+
+    const fetchUser = () => {
+      userStore.fetchUserById(userId)
+    }
+    onMounted(() => {
+      fetchUser()
+    })
+
+    watch(
+      () => userStore.user,
+      (user) => {
+        if (user) {
+          Object.assign(formUser, {
+            first_name: user.first_name || '',
+            last_name: user.last_name || '',
+            username: user.username || '',
+            email: user.email || ''
+          })
+        }
+      }
+    )
     const currentTitle = ref('')
 
     const route = useRoute()
@@ -43,8 +75,8 @@ export default defineComponent({
         case '/products':
           currentTitle.value = 'Products'
           break
-        case '/customers':
-          currentTitle.value = 'Users'
+        case '/profile':
+          currentTitle.value = 'Profile'
           break
         case '/product/:id':
           currentTitle.value = 'Product detail'
@@ -142,7 +174,7 @@ export default defineComponent({
                 class="flex items-center gap-x-2 hover:cursor-pointer"
               >
                 <div class="font-medium order-1">
-                  {user.username ? user.username : ''}
+                  {formUser?.username ? formUser.username : ''}
                 </div>
                 <svg
                   class="w-10 h-10 text-gray-800 dark:text-white order-2"
@@ -194,9 +226,9 @@ export default defineComponent({
                     class="bg-[#fff] dark:bg-gray-700 -mt-[7px] border-l border-t "
                   ></div>
                   <div class="px-4 py-3 text-sm text-gray-900 dark:text-white border-none">
-                    <div>{user.username ? user.username : ''}</div>
+                    <div>{formUser?.username ? formUser.username : ''}</div>
                     <div class="font-medium truncate">
-                      {user.email ? user.email : ''}
+                      {formUser?.email ? formUser.email : ''}
                     </div>
                   </div>
                   <ul
@@ -213,7 +245,7 @@ export default defineComponent({
                     </li>
                     <li>
                       <RouterLink
-                        to="/settings"
+                        to="/profile"
                         class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
                       >
                         Settings

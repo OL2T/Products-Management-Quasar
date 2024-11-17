@@ -12,6 +12,7 @@ const ProductChart = defineComponent({
   },
   setup() {
     const { result, loading, error, refetch } = useQuery(GET_ALL_PRODUCTS, {})
+    const isDarkMode = ref(false)
 
     const chartData = ref<{
       labels: string[]
@@ -42,16 +43,21 @@ const ProductChart = defineComponent({
       responsive: true,
       plugins: {
         legend: {
-          position: 'top'
-        },
-        title: {
-          display: true,
-          text: 'Thống kê số lượng sản phẩm theo danh mục'
+          labels: {
+            color: isDarkMode.value ? '#FFFFFF' : '#000000' // Change color based on dark mode
+          }
         }
       },
       scales: {
+        x: {
+          ticks: {
+            color: isDarkMode.value ? '#FFFFFF' : '#000000' // Change color based on dark mode
+          }
+        },
         y: {
-          beginAtZero: true
+          ticks: {
+            color: isDarkMode.value ? '#FFFFFF' : '#000000' // Change color based on dark mode
+          }
         }
       }
     })
@@ -101,6 +107,21 @@ const ProductChart = defineComponent({
         }
       }
     )
+
+    watch(isDarkMode, (newVal) => {
+      chartOptions.value.plugins.legend.labels.color = newVal
+        ? '#FFFFFF'
+        : '#000000'
+      chartOptions.value.scales.x.ticks.color = newVal ? '#FFFFFF' : '#000000'
+      chartOptions.value.scales.y.ticks.color = newVal ? '#FFFFFF' : '#000000'
+    })
+
+    onMounted(() => {
+      // Simulate fetching the theme from a global state or a prop
+      isDarkMode.value =
+        window.matchMedia &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches
+    })
 
     return () => (
       <div class="w-full">

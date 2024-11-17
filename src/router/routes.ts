@@ -1,11 +1,12 @@
 import Dashboard from '../pages/Dashboard'
 import Index from '../pages/Index'
-import Customers from '../pages/Customers'
+
 import Login from '../pages/Login'
 import Register from '../pages/Register'
 import DetailView from '../components/DetailView'
 import Update from '../components/Update'
 import ProductList from '../components/ProductList'
+import Profile from '../pages/Profile'
 
 const routes = [
   {
@@ -18,8 +19,8 @@ const routes = [
         component: Dashboard
       },
       {
-        path: 'customers',
-        component: Customers
+        path: 'profile',
+        component: Profile
       },
       {
         path: 'products',
